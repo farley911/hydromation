@@ -55,7 +55,7 @@ const int supplement = 4;
 const int ecTimeout = 600; // 12 hours
 const int phTimeout = 300; // 1 hour
 const int fiveMinutes = 60;
-const char version[6] = "1.0.0";
+const char version[6] = "1.1.0";
 
 int currentScreen = 1;
 TSPoint p;
@@ -149,24 +149,27 @@ void loop() {
     case 7:
       displayAdjustNutrientsScreen();
       break;
+    case 8:
+      displayPumpPurgeScreen();
+      break;
   }
 }
 
 void addAdjustNutrientActions() {
   // Increase PPM
-  if (p.y >= 290 && p.y <= 330 && p.x >= 90 && p.x <= 130 && isTouchingScreen) {
+  if (p.y >= 290 && p.y <= 330 && p.x >= 90 && p.x <= 130 && isTouchingScreen()) {
     targetEc = targetEc + 0.2;
     clearScreen();
   }
 
   // Increase Tolerance
-  if (p.y >= 25 && p.y <= 65 && p.x >= 90 && p.x <= 130 && isTouchingScreen) {
+  if (p.y >= 25 && p.y <= 65 && p.x >= 90 && p.x <= 130 && isTouchingScreen()) {
     ecTolerance = ecTolerance + 0.02;
     clearScreen();
   }
   
   // Decrease PPM
-  if (p.y >= 290 && p.y <= 330 && p.x >= 170 && p.x <= 210 && isTouchingScreen) {
+  if (p.y >= 290 && p.y <= 330 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
     if (targetEc >= 0.2) {
       targetEc = targetEc - 0.2;
     } else {
@@ -176,7 +179,7 @@ void addAdjustNutrientActions() {
   }
 
   // Decrease Tolerance
-  if (p.y >= 25 && p.y <= 65 && p.x >= 170 && p.x <= 210 && isTouchingScreen) {
+  if (p.y >= 25 && p.y <= 65 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
     if (ecTolerance >= 0.02) {
       ecTolerance = ecTolerance - 0.02;
     } else {
@@ -186,7 +189,7 @@ void addAdjustNutrientActions() {
   }
 
   // Save date
-  if (p.y >= 150 && p.y <= 280 && p.x >= 240 && p.x <= 290 && isTouchingScreen) {
+  if (p.y >= 150 && p.y <= 280 && p.x >= 240 && p.x <= 290 && isTouchingScreen()) {
     currentScreen = 2;
     clearScreen();
   }
@@ -194,19 +197,19 @@ void addAdjustNutrientActions() {
 
 void  addConfigScreenActions() {
   // navigate to home
-  if (p.y >= 330 && p.y <= 430 && p.x >= 70 && p.x <= 120 && isTouchingScreen) {
+  if (p.y >= 330 && p.y <= 430 && p.x >= 70 && p.x <= 120 && isTouchingScreen()) {
     clearScreen();
     currentScreen = 1;
   }
 
   // Adjust nutrients
-  if (p.y >= 180 && p.y <= 430 && p.x >= 130 && p.x <= 180 && isTouchingScreen) {
+  if (p.y >= 180 && p.y <= 430 && p.x >= 130 && p.x <= 180 && isTouchingScreen()) {
     clearScreen();
     currentScreen = 7;
   }
   
   // navigate from config page 1 to 2
-  if (p.y >= 225 && p.y <= 430 && p.x >= 250 && p.x <= 300 && isTouchingScreen) {
+  if (p.y >= 225 && p.y <= 430 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
     clearScreen();
     currentScreen = 3;
   }
@@ -214,13 +217,19 @@ void  addConfigScreenActions() {
 
 void addConfigScreen2Actions() {
   // navigate from config page 2 to 1
-  if (p.y >= 210 && p.y <= 430 && p.x >= 70 && p.x <= 120 && isTouchingScreen) {
+  if (p.y >= 210 && p.y <= 430 && p.x >= 70 && p.x <= 120 && isTouchingScreen()) {
     clearScreen();
     currentScreen = 2;
   }
 
+  // Navigate to Purge Pumps Screen
+  if (p.y >= 170 && p.y <= 430 && p.x >= 130 && p.x <= 180 && isTouchingScreen()) {
+    clearScreen();
+    currentScreen = 8;
+  }
+
   // Navigate to config page 3
-  if (p.y >= 215 && p.y <= 430 && p.x >= 250 && p.x <= 300 && isTouchingScreen) {
+  if (p.y >= 215 && p.y <= 430 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
     clearScreen();
     currentScreen = 4;
   }
@@ -228,19 +237,19 @@ void addConfigScreen2Actions() {
 
 void addConfigScreen3Actions() {
   // navigate from config page 3 to 2
-  if (p.y >= 210 && p.y <= 430 && p.x >= 70 && p.x <= 120 && isTouchingScreen) {
+  if (p.y >= 210 && p.y <= 430 && p.x >= 70 && p.x <= 120 && isTouchingScreen()) {
     clearScreen();
     currentScreen = 3;
   }
 
   // Set Time
-  if (p.y >= 270 && p.y <= 430 && p.x >= 130 && p.x <= 180 && isTouchingScreen) {
+  if (p.y >= 270 && p.y <= 430 && p.x >= 130 && p.x <= 180 && isTouchingScreen()) {
     clearScreen();
     currentScreen = 5;
   }
   
   // Set Date
-  if (p.y >= 270 && p.y <= 430 && p.x >= 190 && p.x <= 240 && isTouchingScreen) {
+  if (p.y >= 270 && p.y <= 430 && p.x >= 190 && p.x <= 240 && isTouchingScreen()) {
     clearScreen();
     currentScreen = 6;
   }
@@ -253,15 +262,60 @@ void addHomeScreenActions() {
   }
   
   // Navigate to Configuration Screen
-  if (p.y >= 135 && p.y <= 340 && p.x >= 255 && p.x <= 305 && isTouchingScreen) {
+  if (p.y >= 135 && p.y <= 340 && p.x >= 255 && p.x <= 305 && isTouchingScreen()) {
     clearScreen();
     currentScreen = 2; // Display the configuration screen
   }
 }
 
+void addPurgeScreenActions() {
+//   tft.drawRoundRect(15, 15, 40, 40, 5, TEAL);
+//  drawPurgeButton(115, 80);
+//  drawPurgeButton(115, 155);
+//  drawPurgeButton(115, 230);
+//  drawPurgeButton(335, 80);
+//  drawPurgeButton(335, 155);
+//  drawPurgeButton(335, 230);
+  // Back Button
+  if (p.y >= 405 && p.y <= 445 && p.x >= 15 && p.x <= 55 && isTouchingScreen()) {
+    currentScreen = 3;
+    clearScreen();
+  }
+  
+  // Part A
+  if (p.y >= 230 && p.y <= 345 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
+    digitalWrite(partA, HIGH);
+  }
+  
+  // Part B
+  if (p.y >= 230 && p.y <= 345 && p.x >= 155 && p.x <= 195 && isTouchingScreen()) {
+    digitalWrite(partB, HIGH);
+  }
+  
+  // Supp 1
+  if (p.y >= 230 && p.y <= 345 && p.x >= 230 && p.x <= 270 && isTouchingScreen()) {
+    digitalWrite(b52, HIGH);
+  }
+  
+  // Supp 2
+  if (p.y >= 10 && p.y <= 125 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
+    digitalWrite(supplement, HIGH);
+  }
+  
+  // ph Up
+  if (p.y >= 10 && p.y <= 125 && p.x >= 155 && p.x <= 195 && isTouchingScreen()) {
+    digitalWrite(phUp, HIGH);
+  }
+  
+  // ph Down
+  if (p.y >= 10 && p.y <= 125 && p.x >= 230 && p.x <= 270 && isTouchingScreen()) {
+    digitalWrite(phDown, HIGH);
+  }
+}
+
 void addSetDateActions() {
   // Increase Month
-  if (p.y >= 318 && p.y <= 358 && p.x >= 85 && p.x <= 125 && isTouchingScreen) {
+  if (p.y >= 318 && p.y <= 358 && p.x >= 85 && p.x <= 125 && isTouchingScreen()) {
     if (setDateMonth < 12) {
       setDateMonth++;
     } else {
@@ -271,7 +325,7 @@ void addSetDateActions() {
   }
 
   // Increase day
-  if (p.y >= 198 && p.y <= 238 && p.x >= 85 && p.x <= 125 && isTouchingScreen) {
+  if (p.y >= 198 && p.y <= 238 && p.x >= 85 && p.x <= 125 && isTouchingScreen()) {
     if (setDateDay < 31) {
       setDateDay++;
     } else {
@@ -281,13 +335,13 @@ void addSetDateActions() {
   }
   
   // Increase year
-  if (p.y >= 83 && p.y <= 123 && p.x >= 85 && p.x <= 125 && isTouchingScreen) {
+  if (p.y >= 83 && p.y <= 123 && p.x >= 85 && p.x <= 125 && isTouchingScreen()) {
     setDateYear++;
     clearScreen();
   }
 
   // Decrease Month
-  if (p.y >= 318 && p.y <= 358 && p.x >= 170 && p.x <= 210 && isTouchingScreen) {
+  if (p.y >= 318 && p.y <= 358 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
     if (setDateMonth > 1) {
       setDateMonth--;
     } else {
@@ -297,7 +351,7 @@ void addSetDateActions() {
   }
 
   // Decrease day
-  if (p.y >= 198 && p.y <= 238 && p.x >= 170 && p.x <= 210 && isTouchingScreen) {
+  if (p.y >= 198 && p.y <= 238 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
     if (setDateDay > 1) {
       setDateDay--;
     } else {
@@ -307,54 +361,55 @@ void addSetDateActions() {
   }
   
   // Decrease year
-  if (p.y >= 83 && p.y <= 123 && p.x >= 170 && p.x <= 210 && isTouchingScreen) {
+  if (p.y >= 83 && p.y <= 123 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
     setDateYear--;
     clearScreen();
   }
 
   // Save date
-  if (p.y >= 150 && p.y <= 280 && p.x >= 240 && p.x <= 290 && isTouchingScreen) {
+  if (p.y >= 150 && p.y <= 280 && p.x >= 240 && p.x <= 290 && isTouchingScreen()) {
     int _hour = hour();
     int _minute = minute();
     setTime(_hour, _minute, 0, setDateDay, setDateMonth, setDateYear);
     currentScreen = 4;
+    isSettingDateTime = false;
     clearScreen();
   }
 }
 
 void addSetTimeScreenActions() {
   // Increase hour
-  if (p.y >= 303 && p.y <= 343 && p.x >= 85 && p.x <= 125 && isTouchingScreen) {
-    if (setTimeHour < 24) {
+  if (p.y >= 303 && p.y <= 343 && p.x >= 85 && p.x <= 125 && isTouchingScreen()) {
+    if (setTimeHour < 23) {
       setTimeHour++;
     } else {
-      setTimeHour = 1;
+      setTimeHour = 0;
     }
     clearScreen();
   }
 
   // Increase minute
-  if (p.y >= 183 && p.y <= 223 && p.x >= 85 && p.x <= 125 && isTouchingScreen) {
+  if (p.y >= 183 && p.y <= 223 && p.x >= 85 && p.x <= 125 && isTouchingScreen()) {
     if (setTimeMinute < 59) {
       setTimeMinute++;
     } else {
-      setTimeMinute = 1;
+      setTimeMinute = 0;
     }
     clearScreen();
   }
 
   // Decrease hour
-  if (p.y >= 303 && p.y <= 343 && p.x >= 170 && p.x <= 210 && isTouchingScreen) {
-    if (setTimeHour > 1) {
+  if (p.y >= 303 && p.y <= 343 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
+    if (setTimeHour > 0) {
       setTimeHour--;
     } else {
-      setTimeHour = 24;
+      setTimeHour = 23;
     }
     clearScreen();
   }
 
   // Decrease minute
-  if (p.y >= 183 && p.y <= 223 && p.x >= 170 && p.x <= 210 && isTouchingScreen) {
+  if (p.y >= 183 && p.y <= 223 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
     if (setTimeMinute > 1) {
       setTimeMinute--;
     } else {
@@ -364,12 +419,13 @@ void addSetTimeScreenActions() {
   }
 
   // Save time
-  if (p.y >= 150 && p.y <= 280 && p.x >= 240 && p.x <= 290 && isTouchingScreen) {
+  if (p.y >= 150 && p.y <= 280 && p.x >= 240 && p.x <= 290 && isTouchingScreen()) {
     int _month = month();
     int _day = day();
     int _year = year();
     setTime(setTimeHour, setTimeMinute, 0, _day, _month, _year);
     currentScreen = 4;
+    isSettingDateTime = false;
     clearScreen();
   }
 }
@@ -391,6 +447,7 @@ void checkEc() {
   } else if (ecIndex == 7) {                              // the probe seems to provide unreliable results for the first 4 requests so I use the 7th to add a buffer and help ensure accurate readings.
     ecIndex = 0;
     lastEc = ecCollection[6];
+    clearScreen();
     if (lastEc < targetEc - ecTolerance) {
       ecSerial.print("SLEEP\r");
       isEcProbeAsleep = true;
@@ -411,6 +468,7 @@ void checkPh() {
     isEcProbeAsleep = true;
   }
   lastPh = getPh();
+  clearScreen();
   if (!isCheckingPh) {
     isCheckingPh = true;
     lastPhCheck = now();
@@ -440,16 +498,16 @@ void configureTouch() {
 }
 
 int convert24HourTo12Hour(char* ampm, int _hour) {
-  if (_hour > 11 && _hour != 24) {
+  if (_hour < 12) {
+    if (_hour == 0) {
+      _hour = 12;
+    }
+    strcpy(ampm, "AM");
+  } else {
     if (_hour > 12) {
       _hour = _hour - 12;
     }
     strcpy(ampm, "PM");
-  } else if (_hour <= 11 || _hour == 24) {
-    if (_hour == 24) {
-      _hour = _hour - 12;
-    }
-    strcpy(ampm, "AM");
   }
   return _hour;
 }
@@ -684,6 +742,51 @@ void displayHomeScreen() {
   addHomeScreenActions();
 }
 
+void displayPumpPurgeScreen() {
+  tft.drawRoundRect(15, 15, 40, 40, 5, TEAL);
+  tft.drawLine(25, 35, 35, 25, TEAL);
+  tft.drawLine(25, 35, 45, 35, TEAL);
+  tft.drawLine(25, 35, 35, 45, TEAL);
+
+  tft.setTextSize(3);
+  tft.setTextColor(TEAL);
+  tft.setCursor(90, 20);
+  tft.println("eFarley Hydromation");
+  
+  tft.setTextSize(2);
+  tft.setTextColor(WHITE);
+  tft.setCursor(30, 100);
+  tft.print("Part A");
+  drawPurgeButton(115, 80);
+  
+  tft.setTextColor(WHITE);
+  tft.setCursor(30, 175);
+  tft.print("Part B");
+  drawPurgeButton(115, 155);
+  
+  tft.setTextColor(WHITE);
+  tft.setCursor(30, 250);
+  tft.print("Supp 1");
+  drawPurgeButton(115, 230);
+  
+  tft.setTextColor(WHITE);
+  tft.setCursor(250, 100);
+  tft.print("Supp 2");
+  drawPurgeButton(335, 80);
+  
+  tft.setTextColor(WHITE);
+  tft.setCursor(250, 175);
+  tft.print("pH Up");
+  drawPurgeButton(335, 155);
+  
+  tft.setTextColor(WHITE);
+  tft.setCursor(250, 250);
+  tft.print("pH Dwn");
+  drawPurgeButton(335, 230);
+
+  addPurgeScreenActions();
+}
+
 void displaySetDateScreen() {
   displayHeader();
 
@@ -757,6 +860,11 @@ void drawButton(int x, int y, int width, char text[ ]) {
 void drawDownButton(int x, int y) {
   tft.drawRoundRect(x, y, 40, 40, 5, TEAL);
   tft.fillTriangle(x + 10, y + 10, x + 30, y + 10, x + 20, y + 28, TEAL);
+}
+
+void drawPurgeButton(int x, int y) {
+  char purge[ 6 ] = "Purge";
+  drawButton(x, y, 115, purge);
 }
 
 void drawSaveButton() {
