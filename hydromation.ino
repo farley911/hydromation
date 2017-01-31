@@ -50,10 +50,12 @@ const int partA = 7;
 const int partB = 6;
 const int b52 = 5;
 const int supplement = 4;
-const int ecTimeout = 43200; // 12 hours
-const int phTimeout = 3600; // 1 hour
+//const int ecTimeout = 43200; // 12 hours
+//const int phTimeout = 3600; // 1 hour
+const int ecTimeout = 600; // 12 hours
+const int phTimeout = 300; // 1 hour
 const int fiveMinutes = 60;
-const char version[6] = "1.2.0";
+const char version[6] = "1.1.0";
 
 int currentScreen = 1;
 TSPoint p;
@@ -75,7 +77,6 @@ boolean isEcProbeAsleep = true;
 float ecCollection[7];
 int ecIndex = 0;
 boolean isCheckingEc = false;
-boolean isReadingEc = false;
 boolean isCheckingPh = false;
 float slopeValue;
 float interceptValue;
@@ -105,55 +106,52 @@ void setup() {
 }
 
 void loop() {
-  configureTouch();
-
-  if (!isReadingEc) {
-    switch (currentScreen) {
-      case 1:
-        displayHomeScreen();
-        break;
-      case 2:
-        displayConfigScreen();
-        break;
-      case 3:
-        displayConfigScreen2();
-        break;
-      case 4:
-        displayConfigScreen3();
-        break;
-      case 5:
-        if (!isSettingDateTime) {
-          isSettingDateTime = true;
-          storeDateTime();
-        }
-        displaySetTimeScreen();
-        break;
-      case 6:
-        if (!isSettingDateTime) {
-          isSettingDateTime = true;
-          storeDateTime();
-        }
-        displaySetDateScreen();
-        break;
-      case 7:
-        displayAdjustNutrientsScreen();
-        break;
-      case 8:
-        displayPumpPurgeScreen();
-        break;
+  if (!isPumpInUse) {
+    if (((!lastPhCheck || now() - lastPhCheck >= phTimeout || isCheckingPh) && !phWaitTime && !isCheckingEc) || (phWaitTime && now() - phWaitTime >= fiveMinutes)) { // Check PH once an hour, wait 5 minutes after adjusting pH before verifying results and adjusting.
+      checkPh();
     }
   }
-  
   if (!isPumpInUse) {
     if (((!lastEcCheck || now() - lastEcCheck >= ecTimeout || isCheckingEc) && !ecWaitTime && !isCheckingPh) || (ecWaitTime && now() - ecWaitTime >= fiveMinutes)) { // Check EC every 12 hours, wait 5 minutes after adjusting EC before verifiying results and adjusting.
       checkEc();
     }
   }
   
-  if (!isPumpInUse) {
-    if (((!lastPhCheck || now() - lastPhCheck >= phTimeout || isCheckingPh) && !phWaitTime && !isCheckingEc) || (phWaitTime && now() - phWaitTime >= fiveMinutes)) { // Check PH once an hour, wait 5 minutes after adjusting pH before verifying results and adjusting.
-      checkPh();
-    }
+  configureTouch();
+  
+  switch (currentScreen) {
+    case 1:
+      displayHomeScreen();
+      break;
+    case 2:
+      displayConfigScreen();
+      break;
+    case 3:
+      displayConfigScreen2();
+      break;
+    case 4:
+      displayConfigScreen3();
+      break;
+    case 5:
+      if (!isSettingDateTime) {
+        isSettingDateTime = true;
+        storeDateTime();
+      }
+      displaySetTimeScreen();
+      break;
+    case 6:
+      if (!isSettingDateTime) {
+        isSettingDateTime = true;
+        storeDateTime();
+      }
+      displaySetDateScreen();
+      break;
+    case 7:
+      displayAdjustNutrientsScreen();
+      break;
+    case 8:
+      displayPumpPurgeScreen();
+      break;
   }
 }
 
@@ -271,6 +269,13 @@ void addHomeScreenActions() {
 }
 
 void addPurgeScreenActions() {
+//   tft.drawRoundRect(15, 15, 40, 40, 5, TEAL);
+//  drawPurgeButton(115, 80);
+//  drawPurgeButton(115, 155);
+//  drawPurgeButton(115, 230);
+//  drawPurgeButton(335, 80);
+//  drawPurgeButton(335, 155);
+//  drawPurgeButton(335, 230);
   // Back Button
   if (p.y >= 405 && p.y <= 445 && p.x >= 15 && p.x <= 55 && isTouchingScreen()) {
     currentScreen = 3;
@@ -426,9 +431,6 @@ void addSetTimeScreenActions() {
 }
 
 void checkEc() {
-  if (!isReadingEc) {
-    isReadingEc = true;
-  }
   if (!isCheckingEc) {
     lastEcCheck = now();
     isCheckingEc = true;
@@ -438,20 +440,10 @@ void checkEc() {
     isEcProbeAsleep = false;
   }
   if (!isEcStringComplete) {
-    if (ecSerial.available() > 0) {                       // if we see that the Atlas Scientific product has sent a character
-      char inchar = (char)ecSerial.read();                // get the char we just received
-      ecSensorString += inchar;                           // add the char to the var called sensorstring
-      if (inchar == '\r') {                               // if the incoming character is a <CR>
-        isEcStringComplete = true;                        // set the flag
-      }
-    }
+    updateEcSensorString();
   } else if (ecIndex < 7) {
-    if (isdigit(ecSensorString[0]) == true) { 
-      float ec = atof(parseEcString());
-      ecCollection[ecIndex++] = ec;
-    }
-    ecSensorString = "";
-    isEcStringComplete = false;
+    ecCollection[ecIndex++] = getEc();
+    delay(500);                                           // this delay helps with reliablity of results.
   } else if (ecIndex == 7) {                              // the probe seems to provide unreliable results for the first 4 requests so I use the 7th to add a buffer and help ensure accurate readings.
     ecIndex = 0;
     lastEc = ecCollection[6];
@@ -467,7 +459,6 @@ void checkEc() {
       isEcProbeAsleep = true;
       clearScreen();
     }
-    isReadingEc = false;
   }
 }
 
@@ -725,7 +716,6 @@ void displayHomeScreen() {
   tft.print(lastEc);
   tft.print(")");
   if (isCheckingEc) {
-    tft.setTextColor(TEAL);
     tft.print(" Adjusting...");
   }
   tft.println("");
@@ -888,12 +878,20 @@ void drawUpButton(int x, int y) {
   tft.fillTriangle(x + 20, y + 10, x + 30, y + 28, x + 10, y + 28, TEAL);
 }
 
+float getEc() {
+  float ec;
+  ec = atof(parseEcString());
+  ecSensorString = "";
+  isEcStringComplete = false;
+  return ec / 1000;                                     // convert units from the meter to something more useful;
+}
+
 int getMedianNum(int bArray[], int iFilterLen) {        // method copied from calibration example code.
   int bTab[iFilterLen];
   for (byte i = 0; i<iFilterLen; i++) {
     bTab[i] = bArray[i];
   }
-  int i, j, z, bTemp;
+  int i, j, bTemp;
   for (j = 0; j < iFilterLen - 1; j++) {
     for (i = 0; i < iFilterLen - j - 1; i++) {
       if (bTab[i] > bTab[i + 1]) {
@@ -903,11 +901,10 @@ int getMedianNum(int bArray[], int iFilterLen) {        // method copied from ca
      }
     }
   }
-  float sum;
-  for (z = 0; z < iFilterLen; z++) {
-    sum = sum + bTab[z];
-  }
-  bTemp = sum / iFilterLen;
+  if ((iFilterLen & 1) > 0)
+    bTemp = bTab[(iFilterLen - 1) / 2];
+  else
+    bTemp = (bTab[iFilterLen / 2] + bTab[iFilterLen / 2 - 1]) / 2;
   return bTemp;
 }
 
@@ -1043,4 +1040,13 @@ void storeDateTime() {
   setDateYear = year();
 }
 
+void updateEcSensorString() {
+  if (ecSerial.available() > 0) {                       // if we see that the Atlas Scientific product has sent a character
+    char inchar = (char)ecSerial.read();                // get the char we just received
+    ecSensorString += inchar;                           // add the char to the var called sensorstring
+    if (inchar == '\r') {                               // if the incoming character is a <CR>
+      isEcStringComplete = true;                        // set the flag
+    }
+  }
+}
 
