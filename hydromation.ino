@@ -35,6 +35,7 @@
 
 #define TEAL 0x3FFD
 #define WHITE HX8357_WHITE
+#define BLACK 0x0000
 
 Adafruit_HX8357 tft = Adafruit_HX8357(TFT_CS, TFT_DC, TFT_RST);
 
@@ -48,14 +49,14 @@ const int phUp = A1;
 const int phDown = 8;
 const int partA = 7;
 const int partB = 6;
-const int b52 = 5;
-const int supplement = 4;
-const int ecTimeout = 43200; // 12 hours
-const int phTimeout = 3600; // 1 hour
-const int fiveMinutes = 60;
-const char version[6] = "1.1.1";
+const int supp1 = 5;
+const int supp2 = 4;
+const int fiveMinutes = 300;
+const char version[6] = "1.2.0";
 
 int currentScreen = 1;
+long ecTimeout = 43200; // 12 hours
+int phTimeout = 3600; // 1 hour
 TSPoint p;
 SoftwareSerial ecSerial(tx, rx);                        // define how the soft serial port is going to work
 boolean isPumpInUse = false;
@@ -67,8 +68,10 @@ time_t phWaitTime;
 String ecSensorString = "";                             // a string to hold the data from the Atlas Scientific product
 boolean isEcStringComplete = false;                     // have we received all the data from the Atlas Scientific product
 time_t ecWaitTime;
-boolean shouldAddB52 = false;
-boolean shouldAddSupplement = false;
+boolean shouldAddPartA = false;
+boolean shouldAddPartB = false;
+boolean shouldAddSupp1 = false;
+boolean shouldAddSupp2 = false;
 float targetEc = 0.0;
 float ecTolerance = 0.0;
 boolean isEcProbeAsleep = true;
@@ -86,14 +89,16 @@ int setDateDay;
 int setDateYear;
 int setTimeHour;
 int setTimeMinute;
+boolean isPurgingPump = false;
+boolean isFlushingPh = false;
 
 void setup() {
   pinMode(phUp, OUTPUT);
   pinMode(phDown, OUTPUT);
   pinMode(partA, OUTPUT);
   pinMode(partB, OUTPUT);
-  pinMode(b52, OUTPUT);
-  pinMode(supplement, OUTPUT);
+  pinMode(supp1, OUTPUT);
+  pinMode(supp2, OUTPUT);
   setTime(23, 45, 0, 1, 1, 2017);
   ecSerial.begin(9600);                                   // set baud rate for the software serial port to 9600
   ecSensorString.reserve(30);                             // set aside some bytes for receiving data from Atlas Scientific product
@@ -140,6 +145,15 @@ void loop() {
         break;
       case 8:
         displayPumpPurgeScreen();
+        break;
+      case 9:
+        displayFlushScreen();
+        break;
+      case 10:
+        displayEnablePumpsScreen();
+        break;
+      case 11:
+        displayAdjustSchedulesScreen();
         break;
     }
   }
@@ -197,6 +211,38 @@ void addAdjustNutrientActions() {
   }
 }
 
+void addAdjustScheduleActions() {
+  // increase pH interval
+  if (p.y >= 317 && p.y <= 357 && p.x >= 80 && p.x <= 120 && isTouchingScreen()) {
+    clearScreen();
+    phTimeout = phTimeout + 3600;  
+  }
+  
+  // increase EC interval
+  if (p.y >= 107 && p.y <= 147 && p.x >= 80 && p.x <= 120 && isTouchingScreen()) {
+    clearScreen();
+    ecTimeout = ecTimeout + 3600;  
+  }
+  
+  // decrease pH interval
+  if (p.y >= 317 && p.y <= 357 && p.x >= 185 && p.x <= 225 && isTouchingScreen() && phTimeout > 3600) {
+    clearScreen();
+    phTimeout = phTimeout - 3600;
+  }
+
+  // decrease EC interval
+  if (p.y >= 107 && p.y <= 147 && p.x >= 185 && p.x <= 225 && isTouchingScreen() && ecTimeout > 3600) {
+    clearScreen();
+    ecTimeout = ecTimeout - 3600;
+  }
+
+  // Back button
+  if (p.y >= 160 && p.y <= 285 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+    clearScreen();
+    currentScreen = 4;
+  }
+}
+
 void  addConfigScreenActions() {
   // navigate to home
   if (p.y >= 330 && p.y <= 430 && p.x >= 70 && p.x <= 120 && isTouchingScreen()) {
@@ -208,6 +254,12 @@ void  addConfigScreenActions() {
   if (p.y >= 180 && p.y <= 430 && p.x >= 130 && p.x <= 180 && isTouchingScreen()) {
     clearScreen();
     currentScreen = 7;
+  }
+
+  // Enable/Disable pumps
+  if (p.y >= 130 && p.y <= 430 && p.x >= 190 && p.x <= 240 && isTouchingScreen()) {
+    clearScreen();
+    currentScreen = 10;
   }
   
   // navigate from config page 1 to 2
@@ -228,6 +280,12 @@ void addConfigScreen2Actions() {
   if (p.y >= 170 && p.y <= 430 && p.x >= 130 && p.x <= 180 && isTouchingScreen()) {
     clearScreen();
     currentScreen = 8;
+  }
+
+  // Flush system
+  if (p.y >= 315 && p.y <= 430 && p.x >= 190 && p.x <= 240 && isTouchingScreen()) {
+    clearScreen();
+    currentScreen = 9;
   }
 
   // Navigate to config page 3
@@ -255,6 +313,51 @@ void addConfigScreen3Actions() {
     clearScreen();
     currentScreen = 6;
   }
+
+  // Adjust schedules
+  if (p.y >= 270 && p.y <= 430 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+    clearScreen();
+    currentScreen = 11;
+  }
+}
+
+void addEnablePumpsActions() {
+  if (p.y >= 255 && p.y <= 345 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
+    clearScreen();
+    shouldAddPartA = !shouldAddPartA;
+  }
+  if (p.y >= 35 && p.y <= 125 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
+    clearScreen();
+    shouldAddPartB = !shouldAddPartB;
+  }
+  if (p.y >= 255 && p.y <= 345 && p.x >= 155 && p.x <= 205 && isTouchingScreen()) {
+    clearScreen();
+    shouldAddSupp1 = !shouldAddSupp1;
+  }
+  if (p.y >= 35 && p.y <= 125 && p.x >= 155 && p.x <= 205 && isTouchingScreen()) {
+    clearScreen();
+    shouldAddSupp2 = !shouldAddSupp2;
+  }
+  if (p.y >= 160 && p.y <= 285 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+    clearScreen();
+    currentScreen = 2;
+  }
+}
+
+void addFlushActions() {
+  // Back button
+  if (p.y >= 285 && p.y <= 410 && p.x >= 140 && p.x <= 190 && isTouchingScreen()) {
+    clearScreen();
+    currentScreen = 3;
+  }
+
+  // Soups on button
+  if (p.y >= 30 && p.y <= 230 && p.x >= 140 && p.x <= 190 && isTouchingScreen()) {
+    clearScreen();
+    currentScreen = 1;
+    isFlushingPh = true;
+    checkPh();
+  }
 }
 
 void addHomeScreenActions() {
@@ -275,36 +378,32 @@ void addPurgeScreenActions() {
   if (p.y >= 405 && p.y <= 445 && p.x >= 15 && p.x <= 55 && isTouchingScreen()) {
     currentScreen = 3;
     clearScreen();
-  }
-  
-  // Part A
-  if (p.y >= 230 && p.y <= 345 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
+  } else if (p.y >= 230 && p.y <= 345 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
     digitalWrite(partA, HIGH);
-  }
-  
-  // Part B
-  if (p.y >= 230 && p.y <= 345 && p.x >= 155 && p.x <= 195 && isTouchingScreen()) {
+    isPurgingPump = true;
+  } else if (p.y >= 230 && p.y <= 345 && p.x >= 155 && p.x <= 195 && isTouchingScreen()) {
     digitalWrite(partB, HIGH);
-  }
-  
-  // Supp 1
-  if (p.y >= 230 && p.y <= 345 && p.x >= 230 && p.x <= 270 && isTouchingScreen()) {
-    digitalWrite(b52, HIGH);
-  }
-  
-  // Supp 2
-  if (p.y >= 10 && p.y <= 125 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
-    digitalWrite(supplement, HIGH);
-  }
-  
-  // ph Up
-  if (p.y >= 10 && p.y <= 125 && p.x >= 155 && p.x <= 195 && isTouchingScreen()) {
+    isPurgingPump = true;
+  } else if (p.y >= 230 && p.y <= 345 && p.x >= 230 && p.x <= 270 && isTouchingScreen()) {
+    digitalWrite(supp1, HIGH);
+    isPurgingPump = true;
+  } else if (p.y >= 10 && p.y <= 125 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
+    digitalWrite(supp2, HIGH);
+    isPurgingPump = true;
+  } else if (p.y >= 10 && p.y <= 125 && p.x >= 155 && p.x <= 195 && isTouchingScreen()) {
     digitalWrite(phUp, HIGH);
-  }
-  
-  // ph Down
-  if (p.y >= 10 && p.y <= 125 && p.x >= 230 && p.x <= 270 && isTouchingScreen()) {
+    isPurgingPump = true;
+  } else if (p.y >= 10 && p.y <= 125 && p.x >= 230 && p.x <= 270 && isTouchingScreen()) {
     digitalWrite(phDown, HIGH);
+    isPurgingPump = true;
+  } else if (isPurgingPump) {
+    digitalWrite(partA, LOW);
+    digitalWrite(partB, LOW);
+    digitalWrite(supp1, LOW);
+    digitalWrite(supp2, LOW);
+    digitalWrite(phUp, LOW);
+    digitalWrite(phDown, LOW);
+    isPurgingPump = false;
   }
 }
 
@@ -489,6 +588,10 @@ void checkPh() {
   } else {
     phWaitTime = 0;
     isCheckingPh = false;
+    if (isFlushingPh) {
+      isFlushingPh = false;
+      checkEc();
+    }
     clearScreen();
   }
 }
@@ -559,6 +662,43 @@ void displayAdjustNutrientsScreen() {
   addAdjustNutrientActions();
 }
 
+void displayAdjustSchedulesScreen() {
+  displayHeader();
+
+  drawUpButton(103, 80);
+  drawUpButton(313, 80);
+
+  tft.setCursor(45, 140);
+  tft.setTextColor(WHITE);
+  tft.print("pH:");
+  tft.setTextColor(TEAL);
+  tft.setCursor(105, 140);
+  tft.print(phTimeout / 3600);
+  tft.setCursor(150, 145);
+  tft.setTextSize(2);
+  tft.print("hour(s)");
+
+  tft.setTextSize(3);
+  tft.setTextColor(WHITE);
+  tft.setCursor(255, 140);
+  tft.print("EC:");
+  tft.setTextColor(TEAL);
+  tft.setCursor(315, 140);
+  tft.print(ecTimeout / 3600);
+  tft.setCursor(360, 145);
+  tft.setTextSize(2);
+  tft.print("hour(s)");
+
+  drawDownButton(103, 185);
+  drawDownButton(313, 185);
+
+  tft.setTextSize(3);
+  char backText[ ] = "Back";
+  drawButton(175, 250, 125, backText);
+
+  addAdjustScheduleActions();
+}
+
 void displayConfigScreen() {
   displayHeader();
   tft.setTextSize(2);
@@ -591,9 +731,9 @@ void displayConfigScreen2() {
   char purgeText[ ] = "Purge Pump Lines";
   drawButton(30, 130, 260, purgeText);
   
-  // Adjust Schedule
-  char scheduleText[ ] = "Adjust Schedule";
-  drawButton(30, 190, 240, scheduleText);
+  // Flush System
+  char flushText[ ] = "Flush";
+  drawButton(30, 190, 115, flushText);
   
   // More Settings
   char moreText[ ] = "More Settings";
@@ -618,7 +758,76 @@ void displayConfigScreen3() {
   char dateText[ ] = "Set Date";
   drawButton(30, 190, 160, dateText);
 
+  // Adjust schedule
+  char scheduleText[ ] = "Adjust Schedules";
+  drawButton(30, 250, 250, scheduleText);
+
   addConfigScreen3Actions();
+}
+
+void displayEnablePumpsScreen() {
+  char offText[ ] = "OFF";
+  char onText[ ] = "ON";
+  
+  displayHeader();
+  
+  tft.setTextSize(2);
+  tft.setTextColor(WHITE);
+  tft.setCursor(30, 100);
+  char partAText[ ] = "Part A";
+  tft.print(partAText);
+  if (shouldAddPartA) {
+    drawButton(115, 80, 85, onText);
+  } else {
+    drawButton(115, 80, 90, offText);
+  }
+  
+  tft.setTextColor(WHITE);
+  tft.setCursor(30, 175);
+  char supp1Text[ ] = "Supp 1";
+  tft.print(supp1Text);
+  if (shouldAddSupp1) {
+    drawButton(115, 155, 85, onText);
+  } else {
+    drawButton(115, 155, 90, offText);
+  }
+  
+  tft.setTextColor(WHITE);
+  tft.setCursor(250, 100);
+  char partBText[ ] = "Part B";
+  tft.print(partBText);
+  if (shouldAddPartB) {
+    drawButton(335, 80, 85, onText);
+  } else {
+    drawButton(335, 80, 90, offText);
+  }
+  
+  tft.setTextColor(WHITE);
+  tft.setCursor(250, 175);
+  char supp2Text[ ] = "Supp 2";
+  tft.print(supp2Text);
+  if (shouldAddSupp2) {
+    drawButton(335, 155, 85, onText);
+  } else {
+    drawButton(335, 155, 90, offText);
+  }
+  
+  tft.setTextColor(TEAL);
+  tft.setTextSize(3);
+  char backText[ ] = "Back";
+  drawButton(175, 250, 125, backText);
+
+  addEnablePumpsActions();
+}
+
+void displayFlushScreen() {
+  displayHeader();
+  tft.setTextColor(WHITE);
+  char back[ ] = "Back";
+  drawButton(50, 140, 125, back);
+  char soupsOn[ ] = "Soups On";
+  drawButton(230, 140, 200, soupsOn);
+  addFlushActions();
 }
 
 void displayHeader() {
@@ -753,6 +962,7 @@ void displayHomeScreen() {
 }
 
 void displayPumpPurgeScreen() {
+  // Back button
   tft.drawRoundRect(15, 15, 40, 40, 5, TEAL);
   tft.drawLine(25, 35, 35, 25, TEAL);
   tft.drawLine(25, 35, 45, 35, TEAL);
@@ -940,26 +1150,32 @@ void increasePh() {
 }
 
 void increaseEc() {
-  isPumpInUse = true;
-  digitalWrite(partA, HIGH);
-  delay(5000);                                          // add 5ml of Part A nutes
-  digitalWrite(partA, LOW);
-  digitalWrite(partB, HIGH);
-  delay(5000);                                          // add 5ml of Part B nutes
-  digitalWrite(partB, LOW);
-  isPumpInUse = false;
-  if (shouldAddB52) {
+  if (shouldAddPartA) {
     isPumpInUse = true;
-    digitalWrite(b52, HIGH);
-    delay(2500);                                        // add 2.5ml of B52
-    digitalWrite(b52, LOW);
+    digitalWrite(partA, HIGH);
+    delay(5000);                                          // add 5ml of Part A nutes
+    digitalWrite(partA, LOW);
     isPumpInUse = false;
   }
-  if (shouldAddSupplement) {
+  if (shouldAddPartB) {
     isPumpInUse = true;
-    digitalWrite(supplement, HIGH);
+    digitalWrite(partB, HIGH);
+    delay(5000);                                          // add 5ml of Part B nutes
+    digitalWrite(partB, LOW);
+    isPumpInUse = false;
+  }
+  if (shouldAddSupp1) {
+    isPumpInUse = true;
+    digitalWrite(supp1, HIGH);
+    delay(2500);                                        // add 2.5ml of supp1
+    digitalWrite(supp1, LOW);
+    isPumpInUse = false;
+  }
+  if (shouldAddSupp2) {
+    isPumpInUse = true;
+    digitalWrite(supp2, HIGH);
     delay(2500);                                        // add 2.5ml of supplemental nutes
-    digitalWrite(supplement, LOW);
+    digitalWrite(supp2, LOW);
     isPumpInUse = false;
   }
   ecWaitTime = now();
