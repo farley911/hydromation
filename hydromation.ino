@@ -52,7 +52,7 @@ const int partB = 6;
 const int supp1 = 5;
 const int supp2 = 4;
 const int fiveMinutes = 300;
-const char version[6] = "1.2.0";
+const char version[6] = "1.2.1";
 
 int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
@@ -99,7 +99,7 @@ void setup() {
   pinMode(partB, OUTPUT);
   pinMode(supp1, OUTPUT);
   pinMode(supp2, OUTPUT);
-  setTime(23, 45, 0, 1, 1, 2017);
+  setTime(18, 0, 0, 1, 1, 2017);
   ecSerial.begin(9600);                                   // set baud rate for the software serial port to 9600
   ecSensorString.reserve(30);                             // set aside some bytes for receiving data from Atlas Scientific product
   ecSerial.print("SLEEP\r");                              // ensures the EC probe is awake incase the system shut down while it was sleeping.
@@ -581,9 +581,9 @@ void checkPh() {
     isCheckingPh = true;
     lastPhCheck = now();
   }
-  if (lastPh < 5.7) {
+  if (lastPh <= 5.65) {
     increasePh();
-  } else if (lastPh >= 6.0) {
+  } else if (lastPh > 5.95) {
     decreasePh();
   } else {
     phWaitTime = 0;
@@ -627,7 +627,7 @@ int convert24HourTo12Hour(char* ampm, int _hour) {
 void decreasePh() {
   isPumpInUse = true;
   digitalWrite(phDown, HIGH);
-  delay(500);                                           // add 1/2ml of pH down solution.
+  delay(1000);                                           // add 1ml of pH down solution.
   digitalWrite(phDown, LOW);
   isPumpInUse = false;
   phWaitTime = now();
@@ -1143,7 +1143,7 @@ float getPh() {
 void increasePh() {
   isPumpInUse = true;
   digitalWrite(phUp, HIGH);
-  delay(1000);                                          // add 1ml of pH up solution.
+  delay(1500);                                          // add 1.5ml of pH up solution.
   digitalWrite(phUp, LOW);
   isPumpInUse = false;
   phWaitTime = now();
