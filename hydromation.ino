@@ -52,7 +52,7 @@ const int partB = 6;
 const int supp1 = 5;
 const int supp2 = 4;
 const int fiveMinutes = 300;
-const char version[6] = "1.2.1";
+const char version[6] = "1.2.2";
 
 int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
@@ -1137,7 +1137,7 @@ float getPh() {
     delay(40);
   }
   avgValue = getMedianNum(phSamples, sampleCount);
-  return avgValue / 1000 * slopeValue + interceptValue;
+  return (avgValue / 1000 * slopeValue + interceptValue) - 0.2; // pH meter seems to read roughly .2 below the actual pH so I'm adjusting it.
 }
 
 void increasePh() {
