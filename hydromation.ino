@@ -51,8 +51,9 @@ const int partA = 7;
 const int partB = 6;
 const int supp1 = 5;
 const int supp2 = 4;
+const int supp3 = 1;
 const int fiveMinutes = 300;
-const char version[6] = "1.2.2";
+const char version[6] = "1.3.0";
 
 int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
@@ -68,10 +69,10 @@ time_t phWaitTime;
 String ecSensorString = "";                             // a string to hold the data from the Atlas Scientific product
 boolean isEcStringComplete = false;                     // have we received all the data from the Atlas Scientific product
 time_t ecWaitTime;
-boolean shouldAddPartA = false;
-boolean shouldAddPartB = false;
+boolean shouldAddPartAB = false;
 boolean shouldAddSupp1 = false;
 boolean shouldAddSupp2 = false;
+boolean shouldAddSupp3 = false;
 float targetEc = 0.0;
 float ecTolerance = 0.0;
 boolean isEcProbeAsleep = true;
@@ -91,6 +92,7 @@ int setTimeHour;
 int setTimeMinute;
 boolean isPurgingPump = false;
 boolean isFlushingPh = false;
+int nutrientRatios[4][2] = {{0, 0}, {0,0}, {0,0}, {0,0}};
 
 void setup() {
   pinMode(phUp, OUTPUT);
@@ -98,6 +100,7 @@ void setup() {
   pinMode(partA, OUTPUT);
   pinMode(partB, OUTPUT);
   pinMode(supp1, OUTPUT);
+  pinMode(supp2, OUTPUT);
   pinMode(supp2, OUTPUT);
   setTime(18, 0, 0, 1, 1, 2017);
   ecSerial.begin(9600);                                   // set baud rate for the software serial port to 9600
@@ -155,6 +158,12 @@ void loop() {
       case 11:
         displayAdjustSchedulesScreen();
         break;
+      case 12:
+        displayNutrientRatioScreenPage1();
+        break;
+      case 13:
+        displayNutrientRatioScreenPage2();
+        break;
     }
   }
   
@@ -204,8 +213,14 @@ void addAdjustNutrientActions() {
     clearScreen();
   }
 
-  // Save date
-  if (p.y >= 150 && p.y <= 280 && p.x >= 240 && p.x <= 290 && isTouchingScreen()) {
+  // Adjust Ratios Button
+  if (p.y >= 70 && p.y <= 195 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+    currentScreen = 12;
+    clearScreen();
+  }
+
+  // Back button
+  if (p.y >= 250 && p.y <= 415 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
     currentScreen = 2;
     clearScreen();
   }
@@ -324,11 +339,11 @@ void addConfigScreen3Actions() {
 void addEnablePumpsActions() {
   if (p.y >= 255 && p.y <= 345 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
     clearScreen();
-    shouldAddPartA = !shouldAddPartA;
+    shouldAddPartAB = !shouldAddPartAB;
   }
   if (p.y >= 35 && p.y <= 125 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
     clearScreen();
-    shouldAddPartB = !shouldAddPartB;
+    shouldAddSupp2 = !shouldAddSupp2;
   }
   if (p.y >= 255 && p.y <= 345 && p.x >= 155 && p.x <= 205 && isTouchingScreen()) {
     clearScreen();
@@ -336,7 +351,7 @@ void addEnablePumpsActions() {
   }
   if (p.y >= 35 && p.y <= 125 && p.x >= 155 && p.x <= 205 && isTouchingScreen()) {
     clearScreen();
-    shouldAddSupp2 = !shouldAddSupp2;
+    shouldAddSupp3 = !shouldAddSupp3;
   }
   if (p.y >= 160 && p.y <= 285 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
     clearScreen();
@@ -370,6 +385,77 @@ void addHomeScreenActions() {
   if (p.y >= 135 && p.y <= 340 && p.x >= 255 && p.x <= 305 && isTouchingScreen()) {
     clearScreen();
     currentScreen = 2; // Display the configuration screen
+  }
+}
+
+void addNutrientRatiosActionsPage1() {
+  // increase A/B concentration
+  if (p.y >= 293 && p.y <= 333 && p.x >= 80 && p.x <= 120 && isTouchingScreen()) {
+    clearScreen();
+    nutrientRatios[0][0] = nutrientRatios[0][0] + 1;  
+  }
+  
+  // increase Supp 1 concentration
+  if (p.y >= 123 && p.y <= 163 && p.x >= 80 && p.x <= 120 && isTouchingScreen()) {
+    clearScreen();
+    nutrientRatios[1][0] = nutrientRatios[1][0] + 1;  
+  }
+  
+  // decrease A/B concentration
+  if (p.y >= 293 && p.y <= 333 && p.x >= 185 && p.x <= 225 && isTouchingScreen() && nutrientRatios[0][0] > 0) {
+    clearScreen();
+    nutrientRatios[0][0] = nutrientRatios[0][0] - 1;
+  }
+
+  // decrease Supp 1 concentration
+  if (p.y >= 123 && p.y <= 163 && p.x >= 185 && p.x <= 225 && isTouchingScreen && nutrientRatios[1][0] > 0) {
+    clearScreen();
+    nutrientRatios[1][0] = nutrientRatios[1][0] - 1;
+  }
+
+  // Back button
+  if (p.y >= 265 && p.y <= 390 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) { // TODO: Update touch location
+    determineSupplementRatios();
+    clearScreen();
+    currentScreen = 7;
+  }
+
+  // More button
+  if (p.y >= 100 && p.y <= 225 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) { // TODO: Update touch location
+    clearScreen();
+    currentScreen = 13;
+  }
+}
+
+void addNutrientRatiosActionsPage2() {
+  // increase Supp 2 concentration
+  if (p.y >= 288 && p.y <= 328 && p.x >= 80 && p.x <= 120 && isTouchingScreen()) {
+    clearScreen();
+    nutrientRatios[2][0] = nutrientRatios[2][0] + 1;  
+  }
+  
+  // increase Supp 3 concentration
+  if (p.y >= 118 && p.y <= 163 && p.x >= 80 && p.x <= 120 && isTouchingScreen()) {
+    clearScreen();
+    nutrientRatios[3][0] = nutrientRatios[3][0] + 1;  
+  }
+  
+  // decrease supp 2 concentration
+  if (p.y >= 288 && p.y <= 328 && p.x >= 185 && p.x <= 225 && isTouchingScreen() && nutrientRatios[2][0] > 0) {
+    clearScreen();
+    nutrientRatios[2][0] = nutrientRatios[2][0] - 1;
+  }
+
+  // decrease Supp 3 concentration
+  if (p.y >= 118 && p.y <= 163 && p.x >= 185 && p.x <= 225 && isTouchingScreen() && nutrientRatios[3][0] > 0) {
+    clearScreen();
+    nutrientRatios[3][0] = nutrientRatios[3][0] - 1;
+  }
+
+  // Back button
+  if (p.y >= 180 && p.y <= 305 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+    clearScreen();
+    currentScreen = 12;
   }
 }
 
@@ -633,6 +719,20 @@ void decreasePh() {
   phWaitTime = now();
 }
 
+void determineSupplementRatios() {
+  int highValIndex = 0;
+
+  for (int i = 1; i <= 3; i++) {
+    if (nutrientRatios[highValIndex][0] < nutrientRatios[i][0]) {
+      highValIndex = i;
+    }
+  }
+  nutrientRatios[highValIndex][1] = 1;
+  for (int i = 0; i <= 3; i++) {
+    nutrientRatios[i][1] = (nutrientRatios[i][0] / nutrientRatios[highValIndex][0]) * 10;
+  }
+}
+
 void displayAdjustNutrientsScreen() {
   displayHeader();
 
@@ -658,7 +758,12 @@ void displayAdjustNutrientsScreen() {
   drawDownButton(130, 170);
   drawDownButton(400, 170);
   
-  drawSaveButton();
+//  drawSaveButton();
+  char back[ ] = "Back";
+  drawButton(70, 250, 125, back);
+  char ratios[ ] = "Ratios";
+  drawButton(250, 250, 165, ratios);
+  
   addAdjustNutrientActions();
 }
 
@@ -773,10 +878,10 @@ void displayEnablePumpsScreen() {
   
   tft.setTextSize(2);
   tft.setTextColor(WHITE);
-  tft.setCursor(30, 100);
-  char partAText[ ] = "Part A";
-  tft.print(partAText);
-  if (shouldAddPartA) {
+  tft.setCursor(60, 100);
+  char partABText[ ] = "A/B";
+  tft.print(partABText);
+  if (shouldAddPartAB) {
     drawButton(115, 80, 85, onText);
   } else {
     drawButton(115, 80, 90, offText);
@@ -784,9 +889,9 @@ void displayEnablePumpsScreen() {
   
   tft.setTextColor(WHITE);
   tft.setCursor(30, 175);
-  char supp1Text[ ] = "Supp 1";
-  tft.print(supp1Text);
-  if (shouldAddSupp1) {
+  char supp2Text[ ] = "Supp 2";
+  tft.print(supp2Text);
+  if (shouldAddSupp2) {
     drawButton(115, 155, 85, onText);
   } else {
     drawButton(115, 155, 90, offText);
@@ -794,9 +899,9 @@ void displayEnablePumpsScreen() {
   
   tft.setTextColor(WHITE);
   tft.setCursor(250, 100);
-  char partBText[ ] = "Part B";
-  tft.print(partBText);
-  if (shouldAddPartB) {
+  char supp1Text[ ] = "Supp 1";
+  tft.print(supp1Text);
+  if (shouldAddSupp1) {
     drawButton(335, 80, 85, onText);
   } else {
     drawButton(335, 80, 90, offText);
@@ -804,9 +909,9 @@ void displayEnablePumpsScreen() {
   
   tft.setTextColor(WHITE);
   tft.setCursor(250, 175);
-  char supp2Text[ ] = "Supp 2";
-  tft.print(supp2Text);
-  if (shouldAddSupp2) {
+  char supp3Text[ ] = "Supp 3";
+  tft.print(supp3Text);
+  if (shouldAddSupp3) {
     drawButton(335, 155, 85, onText);
   } else {
     drawButton(335, 155, 90, offText);
@@ -959,6 +1064,83 @@ void displayHomeScreen() {
   tft.println(version);
 
   addHomeScreenActions();
+}
+
+void displayNutrientRatioScreenPage1() {
+  displayHeader();
+
+  drawUpButton(123, 80);
+  drawUpButton(333, 80);
+
+  tft.setCursor(55, 140);
+  tft.setTextColor(WHITE);
+  tft.print("A/B");
+  tft.setTextColor(TEAL);
+  tft.setCursor(125, 140);
+  tft.print(nutrientRatios[0][0]);
+  tft.setCursor(170, 145);
+  tft.setTextSize(2);
+  tft.print("ml/l");
+
+  tft.setTextSize(3);
+  tft.setTextColor(WHITE);
+  tft.setCursor(285, 140);
+  tft.print("S1");
+  tft.setTextColor(TEAL);
+  tft.setCursor(335, 140);
+  tft.print(nutrientRatios[1][0]);
+  tft.setCursor(380, 145);
+  tft.setTextSize(2);
+  tft.print("ml/l");
+
+  drawDownButton(123, 185);
+  drawDownButton(333, 185);
+
+  tft.setTextSize(3);
+  char backText[ ] = "Back";
+  drawButton(100, 250, 125, backText);
+
+  char moreText[ ] = "More";
+  drawButton(265, 250, 125, moreText);
+
+  addNutrientRatiosActionsPage1();
+}
+
+void displayNutrientRatioScreenPage2() {
+  displayHeader();
+
+  drawUpButton(118, 80);
+  drawUpButton(328, 80);
+
+  tft.setCursor(65, 140);
+  tft.setTextColor(WHITE);
+  tft.print("S2");
+  tft.setTextColor(TEAL);
+  tft.setCursor(120, 140);
+  tft.print(nutrientRatios[2][0]);
+  tft.setCursor(165, 145);
+  tft.setTextSize(2);
+  tft.print("ml/l");
+
+  tft.setTextSize(3);
+  tft.setTextColor(WHITE);
+  tft.setCursor(275, 140);
+  tft.print("S3");
+  tft.setTextColor(TEAL);
+  tft.setCursor(330, 140);
+  tft.print(nutrientRatios[3][0]);
+  tft.setCursor(375, 145);
+  tft.setTextSize(2);
+  tft.print("ml/l");
+
+  drawDownButton(118, 185);
+  drawDownButton(328, 185);
+
+  tft.setTextSize(3);
+  char backText[ ] = "Back";
+  drawButton(180, 250, 125, backText);
+  
+  addNutrientRatiosActionsPage2();
 }
 
 void displayPumpPurgeScreen() {
@@ -1150,32 +1332,35 @@ void increasePh() {
 }
 
 void increaseEc() {
-  if (shouldAddPartA) {
+  if (shouldAddPartAB) {
     isPumpInUse = true;
     digitalWrite(partA, HIGH);
-    delay(5000);                                          // add 5ml of Part A nutes
+    delay(5000 * (nutrientRatios[0][1] / 10));                                          // add Part A nutes
     digitalWrite(partA, LOW);
-    isPumpInUse = false;
-  }
-  if (shouldAddPartB) {
-    isPumpInUse = true;
     digitalWrite(partB, HIGH);
-    delay(5000);                                          // add 5ml of Part B nutes
+    delay(5000 * (nutrientRatios[0][1] / 10));                                          // add Part B nutes
     digitalWrite(partB, LOW);
     isPumpInUse = false;
   }
   if (shouldAddSupp1) {
     isPumpInUse = true;
     digitalWrite(supp1, HIGH);
-    delay(2500);                                        // add 2.5ml of supp1
+    delay(5000 * (nutrientRatios[1][1] / 10));                                          // add supplemental nutes #1
     digitalWrite(supp1, LOW);
     isPumpInUse = false;
   }
   if (shouldAddSupp2) {
     isPumpInUse = true;
     digitalWrite(supp2, HIGH);
-    delay(2500);                                        // add 2.5ml of supplemental nutes
+    delay(5000 * (nutrientRatios[2][1] / 10));                                          // add supplemental nutes #2
     digitalWrite(supp2, LOW);
+    isPumpInUse = false;
+  }
+  if (shouldAddSupp3) {
+    isPumpInUse = true;
+    digitalWrite(supp3, HIGH);
+    delay(5000 * (nutrientRatios[3][1] / 10));                                         // add supplemental nutes #3
+    digitalWrite(supp3, LOW);
     isPumpInUse = false;
   }
   ecWaitTime = now();
