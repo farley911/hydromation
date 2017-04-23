@@ -53,7 +53,7 @@ const int supp1 = 5;
 const int supp2 = 4;
 const int supp3 = 1;
 const int fiveMinutes = 300;
-const char version[6] = "1.3.0";
+const char version[6] = "1.3.1";
 
 int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
@@ -343,11 +343,11 @@ void addEnablePumpsActions() {
   }
   if (p.y >= 35 && p.y <= 125 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
     clearScreen();
-    shouldAddSupp2 = !shouldAddSupp2;
+    shouldAddSupp1 = !shouldAddSupp1;
   }
   if (p.y >= 255 && p.y <= 345 && p.x >= 155 && p.x <= 205 && isTouchingScreen()) {
     clearScreen();
-    shouldAddSupp1 = !shouldAddSupp1;
+    shouldAddSupp2 = !shouldAddSupp2;
   }
   if (p.y >= 35 && p.y <= 125 && p.x >= 155 && p.x <= 205 && isTouchingScreen()) {
     clearScreen();
@@ -729,7 +729,7 @@ void determineSupplementRatios() {
   }
   nutrientRatios[highValIndex][1] = 1;
   for (int i = 0; i <= 3; i++) {
-    nutrientRatios[i][1] = (nutrientRatios[i][0] / nutrientRatios[highValIndex][0]) * 10;
+    nutrientRatios[i][1] = ((float)nutrientRatios[i][0] / (float)nutrientRatios[highValIndex][0]) * 10;
   }
 }
 
@@ -1335,31 +1335,31 @@ void increaseEc() {
   if (shouldAddPartAB) {
     isPumpInUse = true;
     digitalWrite(partA, HIGH);
-    delay(5000 * (nutrientRatios[0][1] / 10));                                          // add Part A nutes
+    delay(5000 * ((float)nutrientRatios[0][1] / 10));                                          // add Part A nutes
     digitalWrite(partA, LOW);
     digitalWrite(partB, HIGH);
-    delay(5000 * (nutrientRatios[0][1] / 10));                                          // add Part B nutes
+    delay(5000 * ((float)nutrientRatios[0][1] / 10));                                          // add Part B nutes
     digitalWrite(partB, LOW);
     isPumpInUse = false;
   }
   if (shouldAddSupp1) {
     isPumpInUse = true;
     digitalWrite(supp1, HIGH);
-    delay(5000 * (nutrientRatios[1][1] / 10));                                          // add supplemental nutes #1
+    delay(5000 * ((float)nutrientRatios[1][1] / 10));                                          // add supplemental nutes #1
     digitalWrite(supp1, LOW);
     isPumpInUse = false;
   }
   if (shouldAddSupp2) {
     isPumpInUse = true;
     digitalWrite(supp2, HIGH);
-    delay(5000 * (nutrientRatios[2][1] / 10));                                          // add supplemental nutes #2
+    delay(5000 * ((float)nutrientRatios[2][1] / 10));                                          // add supplemental nutes #2
     digitalWrite(supp2, LOW);
     isPumpInUse = false;
   }
   if (shouldAddSupp3) {
     isPumpInUse = true;
     digitalWrite(supp3, HIGH);
-    delay(5000 * (nutrientRatios[3][1] / 10));                                         // add supplemental nutes #3
+    delay(5000 * ((float)nutrientRatios[3][1] / 10));                                         // add supplemental nutes #3
     digitalWrite(supp3, LOW);
     isPumpInUse = false;
   }
