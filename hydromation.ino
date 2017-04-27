@@ -53,7 +53,7 @@ const int supp1 = 5;
 const int supp2 = 4;
 const int supp3 = 1;
 const int fiveMinutes = 300;
-const char version[6] = "1.3.1";
+const char version[6] = "1.3.2";
 
 int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
@@ -101,7 +101,7 @@ void setup() {
   pinMode(partB, OUTPUT);
   pinMode(supp1, OUTPUT);
   pinMode(supp2, OUTPUT);
-  pinMode(supp2, OUTPUT);
+  pinMode(supp3, OUTPUT);
   setTime(18, 0, 0, 1, 1, 2017);
   ecSerial.begin(9600);                                   // set baud rate for the software serial port to 9600
   ecSensorString.reserve(30);                             // set aside some bytes for receiving data from Atlas Scientific product
