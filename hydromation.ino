@@ -409,6 +409,7 @@ void addNutrientRatiosActionsPage1() {
   }
 
   // decrease Supp 1 concentration
+  if (isTouchingPoint(123, 163, 185, 225) && nutrientRatios[1][0] > 0) {
     clearScreen();
     nutrientRatios[1][0] = nutrientRatios[1][0] - 1;
   }
