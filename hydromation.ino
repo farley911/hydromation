@@ -53,7 +53,7 @@ const int supp1 = 5;
 const int supp2 = 4;
 const int supp3 = 1;
 const int fiveMinutes = 300;
-const char version[6] = "1.3.2";
+const char version[6] = "1.3.3";
 
 int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
@@ -93,6 +93,7 @@ int setTimeMinute;
 boolean isPurgingPump = false;
 boolean isFlushingPh = false;
 int nutrientRatios[4][2] = {{0, 0}, {0,0}, {0,0}, {0,0}};
+int pumpRuntime = 5000;
 
 void setup() {
   pinMode(phUp, OUTPUT);
@@ -182,19 +183,19 @@ void loop() {
 
 void addAdjustNutrientActions() {
   // Increase PPM
-  if (p.y >= 290 && p.y <= 330 && p.x >= 90 && p.x <= 130 && isTouchingScreen()) {
+  if (isTouchingPoint(290, 330, 90, 130)) {
     targetEc = targetEc + 0.2;
     clearScreen();
   }
 
   // Increase Tolerance
-  if (p.y >= 25 && p.y <= 65 && p.x >= 90 && p.x <= 130 && isTouchingScreen()) {
+  if (isTouchingPoint(25, 65, 90, 130)) {
     ecTolerance = ecTolerance + 0.02;
     clearScreen();
   }
   
   // Decrease PPM
-  if (p.y >= 290 && p.y <= 330 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
+  if (isTouchingPoint(290, 330, 170, 210)) {
     if (targetEc >= 0.2) {
       targetEc = targetEc - 0.2;
     } else {
@@ -204,7 +205,7 @@ void addAdjustNutrientActions() {
   }
 
   // Decrease Tolerance
-  if (p.y >= 25 && p.y <= 65 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
+  if (isTouchingPoint(25, 65, 170, 210)) {
     if (ecTolerance >= 0.02) {
       ecTolerance = ecTolerance - 0.02;
     } else {
@@ -214,13 +215,13 @@ void addAdjustNutrientActions() {
   }
 
   // Adjust Ratios Button
-  if (p.y >= 70 && p.y <= 195 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+  if (isTouchingPoint(70, 195, 250, 300)) {
     currentScreen = 12;
     clearScreen();
   }
 
   // Back button
-  if (p.y >= 250 && p.y <= 415 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+  if (isTouchingPoint(250, 415, 250, 300)) {
     currentScreen = 2;
     clearScreen();
   }
@@ -228,31 +229,31 @@ void addAdjustNutrientActions() {
 
 void addAdjustScheduleActions() {
   // increase pH interval
-  if (p.y >= 317 && p.y <= 357 && p.x >= 80 && p.x <= 120 && isTouchingScreen()) {
+  if (isTouchingPoint(317, 357, 80, 120)) {
     clearScreen();
     phTimeout = phTimeout + 3600;  
   }
   
   // increase EC interval
-  if (p.y >= 107 && p.y <= 147 && p.x >= 80 && p.x <= 120 && isTouchingScreen()) {
+  if (isTouchingPoint(107, 147, 80, 120)) {
     clearScreen();
     ecTimeout = ecTimeout + 3600;  
   }
   
   // decrease pH interval
-  if (p.y >= 317 && p.y <= 357 && p.x >= 185 && p.x <= 225 && isTouchingScreen() && phTimeout > 3600) {
+  if (isTouchingPoint(317, 357, 185, 225) && phTimeout > 3600) {
     clearScreen();
     phTimeout = phTimeout - 3600;
   }
 
   // decrease EC interval
-  if (p.y >= 107 && p.y <= 147 && p.x >= 185 && p.x <= 225 && isTouchingScreen() && ecTimeout > 3600) {
+  if (isTouchingPoint(107, 147, 185, 225) && ecTimeout > 3600) {
     clearScreen();
     ecTimeout = ecTimeout - 3600;
   }
 
   // Back button
-  if (p.y >= 160 && p.y <= 285 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+  if (isTouchingPoint(160, 285, 250, 300)) {
     clearScreen();
     currentScreen = 4;
   }
@@ -260,25 +261,25 @@ void addAdjustScheduleActions() {
 
 void  addConfigScreenActions() {
   // navigate to home
-  if (p.y >= 330 && p.y <= 430 && p.x >= 70 && p.x <= 120 && isTouchingScreen()) {
+  if (isTouchingPoint(330, 430, 70, 120)) {
     clearScreen();
     currentScreen = 1;
   }
 
   // Adjust nutrients
-  if (p.y >= 180 && p.y <= 430 && p.x >= 130 && p.x <= 180 && isTouchingScreen()) {
+  if (isTouchingPoint(180, 430, 130, 180)) {
     clearScreen();
     currentScreen = 7;
   }
 
   // Enable/Disable pumps
-  if (p.y >= 130 && p.y <= 430 && p.x >= 190 && p.x <= 240 && isTouchingScreen()) {
+  if (isTouchingPoint(130, 430, 190, 240)) {
     clearScreen();
     currentScreen = 10;
   }
   
   // navigate from config page 1 to 2
-  if (p.y >= 225 && p.y <= 430 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+  if (isTouchingPoint(225, 430, 250, 300)) {
     clearScreen();
     currentScreen = 3;
   }
@@ -286,25 +287,25 @@ void  addConfigScreenActions() {
 
 void addConfigScreen2Actions() {
   // navigate from config page 2 to 1
-  if (p.y >= 210 && p.y <= 430 && p.x >= 70 && p.x <= 120 && isTouchingScreen()) {
+  if (isTouchingPoint(210, 430, 70, 120)) {
     clearScreen();
     currentScreen = 2;
   }
 
   // Navigate to Purge Pumps Screen
-  if (p.y >= 170 && p.y <= 430 && p.x >= 130 && p.x <= 180 && isTouchingScreen()) {
+  if (isTouchingPoint(170, 430, 130, 180)) {
     clearScreen();
     currentScreen = 8;
   }
 
   // Flush system
-  if (p.y >= 315 && p.y <= 430 && p.x >= 190 && p.x <= 240 && isTouchingScreen()) {
+  if (isTouchingPoint(315, 430, 190, 240)) {
     clearScreen();
     currentScreen = 9;
   }
 
   // Navigate to config page 3
-  if (p.y >= 215 && p.y <= 430 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+  if (isTouchingPoint(215, 430, 250, 300)) {
     clearScreen();
     currentScreen = 4;
   }
@@ -312,48 +313,48 @@ void addConfigScreen2Actions() {
 
 void addConfigScreen3Actions() {
   // navigate from config page 3 to 2
-  if (p.y >= 210 && p.y <= 430 && p.x >= 70 && p.x <= 120 && isTouchingScreen()) {
+  if (isTouchingPoint(210, 430, 70, 120)) {
     clearScreen();
     currentScreen = 3;
   }
 
   // Set Time
-  if (p.y >= 270 && p.y <= 430 && p.x >= 130 && p.x <= 180 && isTouchingScreen()) {
+  if (isTouchingPoint(270, 430, 130, 180)) {
     clearScreen();
     currentScreen = 5;
   }
   
   // Set Date
-  if (p.y >= 270 && p.y <= 430 && p.x >= 190 && p.x <= 240 && isTouchingScreen()) {
+  if (isTouchingPoint(270, 430, 190, 240)) {
     clearScreen();
     currentScreen = 6;
   }
 
   // Adjust schedules
-  if (p.y >= 270 && p.y <= 430 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+  if (isTouchingPoint(270, 430, 250, 300)) {
     clearScreen();
     currentScreen = 11;
   }
 }
 
 void addEnablePumpsActions() {
-  if (p.y >= 255 && p.y <= 345 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
+  if (isTouchingPoint(255, 345, 80, 130)) {
     clearScreen();
     shouldAddPartAB = !shouldAddPartAB;
   }
-  if (p.y >= 35 && p.y <= 125 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
+  if (isTouchingPoint(35, 125, 80, 130)) {
     clearScreen();
     shouldAddSupp1 = !shouldAddSupp1;
   }
-  if (p.y >= 255 && p.y <= 345 && p.x >= 155 && p.x <= 205 && isTouchingScreen()) {
+  if (isTouchingPoint(255, 345, 155, 205)) {
     clearScreen();
     shouldAddSupp2 = !shouldAddSupp2;
   }
-  if (p.y >= 35 && p.y <= 125 && p.x >= 155 && p.x <= 205 && isTouchingScreen()) {
+  if (isTouchingPoint(35, 125, 155, 205)) {
     clearScreen();
     shouldAddSupp3 = !shouldAddSupp3;
   }
-  if (p.y >= 160 && p.y <= 285 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+  if (isTouchingPoint(160, 285, 250, 300)) {
     clearScreen();
     currentScreen = 2;
   }
@@ -361,13 +362,13 @@ void addEnablePumpsActions() {
 
 void addFlushActions() {
   // Back button
-  if (p.y >= 285 && p.y <= 410 && p.x >= 140 && p.x <= 190 && isTouchingScreen()) {
+  if (isTouchingPoint(285, 410, 140, 190)) {
     clearScreen();
     currentScreen = 3;
   }
 
   // Soups on button
-  if (p.y >= 30 && p.y <= 230 && p.x >= 140 && p.x <= 190 && isTouchingScreen()) {
+  if (isTouchingPoint(30, 230, 140, 190)) {
     clearScreen();
     currentScreen = 1;
     isFlushingPh = true;
@@ -382,7 +383,7 @@ void addHomeScreenActions() {
   }
   
   // Navigate to Configuration Screen
-  if (p.y >= 135 && p.y <= 340 && p.x >= 255 && p.x <= 305 && isTouchingScreen()) {
+  if (isTouchingPoint(135, 340, 255, 305)) {
     clearScreen();
     currentScreen = 2; // Display the configuration screen
   }
@@ -390,38 +391,37 @@ void addHomeScreenActions() {
 
 void addNutrientRatiosActionsPage1() {
   // increase A/B concentration
-  if (p.y >= 293 && p.y <= 333 && p.x >= 80 && p.x <= 120 && isTouchingScreen()) {
+  if (isTouchingPoint(293, 333, 80, 120)) {
     clearScreen();
     nutrientRatios[0][0] = nutrientRatios[0][0] + 1;  
   }
   
   // increase Supp 1 concentration
-  if (p.y >= 123 && p.y <= 163 && p.x >= 80 && p.x <= 120 && isTouchingScreen()) {
+  if (isTouchingPoint(123, 163, 80, 120)) {
     clearScreen();
     nutrientRatios[1][0] = nutrientRatios[1][0] + 1;  
   }
   
   // decrease A/B concentration
-  if (p.y >= 293 && p.y <= 333 && p.x >= 185 && p.x <= 225 && isTouchingScreen() && nutrientRatios[0][0] > 0) {
+  if (isTouchingPoint(293, 333, 185, 225) && nutrientRatios[0][0] > 0) {
     clearScreen();
     nutrientRatios[0][0] = nutrientRatios[0][0] - 1;
   }
 
   // decrease Supp 1 concentration
-  if (p.y >= 123 && p.y <= 163 && p.x >= 185 && p.x <= 225 && isTouchingScreen && nutrientRatios[1][0] > 0) {
     clearScreen();
     nutrientRatios[1][0] = nutrientRatios[1][0] - 1;
   }
 
   // Back button
-  if (p.y >= 265 && p.y <= 390 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) { // TODO: Update touch location
+  if (isTouchingPoint(265, 390, 250, 300)) {
     determineSupplementRatios();
     clearScreen();
     currentScreen = 7;
   }
 
   // More button
-  if (p.y >= 100 && p.y <= 225 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) { // TODO: Update touch location
+  if (isTouchingPoint(100, 225, 250, 300)) {
     clearScreen();
     currentScreen = 13;
   }
@@ -429,31 +429,31 @@ void addNutrientRatiosActionsPage1() {
 
 void addNutrientRatiosActionsPage2() {
   // increase Supp 2 concentration
-  if (p.y >= 288 && p.y <= 328 && p.x >= 80 && p.x <= 120 && isTouchingScreen()) {
+  if (isTouchingPoint(288, 328, 80, 120)) {
     clearScreen();
     nutrientRatios[2][0] = nutrientRatios[2][0] + 1;  
   }
   
   // increase Supp 3 concentration
-  if (p.y >= 118 && p.y <= 163 && p.x >= 80 && p.x <= 120 && isTouchingScreen()) {
+  if (isTouchingPoint(118, 163, 80, 120)) {
     clearScreen();
     nutrientRatios[3][0] = nutrientRatios[3][0] + 1;  
   }
   
   // decrease supp 2 concentration
-  if (p.y >= 288 && p.y <= 328 && p.x >= 185 && p.x <= 225 && isTouchingScreen() && nutrientRatios[2][0] > 0) {
+  if (isTouchingPoint(288, 328, 185, 225) && nutrientRatios[2][0] > 0) {
     clearScreen();
     nutrientRatios[2][0] = nutrientRatios[2][0] - 1;
   }
 
   // decrease Supp 3 concentration
-  if (p.y >= 118 && p.y <= 163 && p.x >= 185 && p.x <= 225 && isTouchingScreen() && nutrientRatios[3][0] > 0) {
+  if (isTouchingPoint(118, 163, 185, 225) && nutrientRatios[3][0] > 0) {
     clearScreen();
     nutrientRatios[3][0] = nutrientRatios[3][0] - 1;
   }
 
   // Back button
-  if (p.y >= 180 && p.y <= 305 && p.x >= 250 && p.x <= 300 && isTouchingScreen()) {
+  if (isTouchingPoint(180, 305, 250, 300)) {
     clearScreen();
     currentScreen = 12;
   }
@@ -461,25 +461,25 @@ void addNutrientRatiosActionsPage2() {
 
 void addPurgeScreenActions() {
   // Back Button
-  if (p.y >= 405 && p.y <= 445 && p.x >= 15 && p.x <= 55 && isTouchingScreen()) {
+  if (isTouchingPoint(405, 445, 15, 55)) {
     currentScreen = 3;
     clearScreen();
-  } else if (p.y >= 230 && p.y <= 345 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
+  } else if (isTouchingPoint(230, 345, 80, 130)) {
     digitalWrite(partA, HIGH);
     isPurgingPump = true;
-  } else if (p.y >= 230 && p.y <= 345 && p.x >= 155 && p.x <= 195 && isTouchingScreen()) {
+  } else if (isTouchingPoint(230, 345, 155, 195)) {
     digitalWrite(partB, HIGH);
     isPurgingPump = true;
-  } else if (p.y >= 230 && p.y <= 345 && p.x >= 230 && p.x <= 270 && isTouchingScreen()) {
+  } else if (isTouchingPoint(230, 345, 230, 270)) {
     digitalWrite(supp1, HIGH);
     isPurgingPump = true;
-  } else if (p.y >= 10 && p.y <= 125 && p.x >= 80 && p.x <= 130 && isTouchingScreen()) {
+  } else if (isTouchingPoint(10, 125, 80, 130)) {
     digitalWrite(supp2, HIGH);
     isPurgingPump = true;
-  } else if (p.y >= 10 && p.y <= 125 && p.x >= 155 && p.x <= 195 && isTouchingScreen()) {
+  } else if (isTouchingPoint(10, 125, 155, 195)) {
     digitalWrite(phUp, HIGH);
     isPurgingPump = true;
-  } else if (p.y >= 10 && p.y <= 125 && p.x >= 230 && p.x <= 270 && isTouchingScreen()) {
+  } else if (isTouchingPoint(10, 125, 230, 270)) {
     digitalWrite(phDown, HIGH);
     isPurgingPump = true;
   } else if (isPurgingPump) {
@@ -495,7 +495,7 @@ void addPurgeScreenActions() {
 
 void addSetDateActions() {
   // Increase Month
-  if (p.y >= 318 && p.y <= 358 && p.x >= 85 && p.x <= 125 && isTouchingScreen()) {
+  if (isTouchingPoint(318, 358, 85, 125)) {
     if (setDateMonth < 12) {
       setDateMonth++;
     } else {
@@ -505,7 +505,7 @@ void addSetDateActions() {
   }
 
   // Increase day
-  if (p.y >= 198 && p.y <= 238 && p.x >= 85 && p.x <= 125 && isTouchingScreen()) {
+  if (isTouchingPoint(198, 238, 85, 125)) {
     if (setDateDay < 31) {
       setDateDay++;
     } else {
@@ -515,13 +515,13 @@ void addSetDateActions() {
   }
   
   // Increase year
-  if (p.y >= 83 && p.y <= 123 && p.x >= 85 && p.x <= 125 && isTouchingScreen()) {
+  if (isTouchingPoint(83, 123, 85, 125)) {
     setDateYear++;
     clearScreen();
   }
 
   // Decrease Month
-  if (p.y >= 318 && p.y <= 358 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
+  if (isTouchingPoint(318, 358, 170, 210)) {
     if (setDateMonth > 1) {
       setDateMonth--;
     } else {
@@ -531,7 +531,7 @@ void addSetDateActions() {
   }
 
   // Decrease day
-  if (p.y >= 198 && p.y <= 238 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
+  if (isTouchingPoint(198, 238, 170, 210)) {
     if (setDateDay > 1) {
       setDateDay--;
     } else {
@@ -541,13 +541,13 @@ void addSetDateActions() {
   }
   
   // Decrease year
-  if (p.y >= 83 && p.y <= 123 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
+  if (isTouchingPoint(83, 123, 170, 210)) {
     setDateYear--;
     clearScreen();
   }
 
   // Save date
-  if (p.y >= 150 && p.y <= 280 && p.x >= 240 && p.x <= 290 && isTouchingScreen()) {
+  if (isTouchingPoint(150, 280, 240, 290)) {
     int _hour = hour();
     int _minute = minute();
     setTime(_hour, _minute, 0, setDateDay, setDateMonth, setDateYear);
@@ -559,7 +559,7 @@ void addSetDateActions() {
 
 void addSetTimeScreenActions() {
   // Increase hour
-  if (p.y >= 303 && p.y <= 343 && p.x >= 85 && p.x <= 125 && isTouchingScreen()) {
+  if (isTouchingPoint(303, 343, 85, 125)) {
     if (setTimeHour < 23) {
       setTimeHour++;
     } else {
@@ -569,7 +569,7 @@ void addSetTimeScreenActions() {
   }
 
   // Increase minute
-  if (p.y >= 183 && p.y <= 223 && p.x >= 85 && p.x <= 125 && isTouchingScreen()) {
+  if (isTouchingPoint(183, 223, 85, 125)) {
     if (setTimeMinute < 59) {
       setTimeMinute++;
     } else {
@@ -579,7 +579,7 @@ void addSetTimeScreenActions() {
   }
 
   // Decrease hour
-  if (p.y >= 303 && p.y <= 343 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
+  if (isTouchingPoint(303, 343, 170, 210)) {
     if (setTimeHour > 0) {
       setTimeHour--;
     } else {
@@ -589,7 +589,7 @@ void addSetTimeScreenActions() {
   }
 
   // Decrease minute
-  if (p.y >= 183 && p.y <= 223 && p.x >= 170 && p.x <= 210 && isTouchingScreen()) {
+  if (isTouchingPoint(183, 223, 170, 210)) {
     if (setTimeMinute > 1) {
       setTimeMinute--;
     } else {
@@ -599,7 +599,7 @@ void addSetTimeScreenActions() {
   }
 
   // Save time
-  if (p.y >= 150 && p.y <= 280 && p.x >= 240 && p.x <= 290 && isTouchingScreen()) {
+  if (isTouchingPoint(150, 280, 240, 290)) {
     int _month = month();
     int _day = day();
     int _year = year();
@@ -1335,7 +1335,7 @@ void increaseEc() {
   if (shouldAddPartAB) {
     isPumpInUse = true;
     digitalWrite(partA, HIGH);
-    delay(5000 * ((float)nutrientRatios[0][1] / 10));                                          // add Part A nutes
+    delay(pumpRuntime * ((float)nutrientRatios[0][1] / 10));                                          // add Part A nutes
     digitalWrite(partA, LOW);
     digitalWrite(partB, HIGH);
     delay(5000 * ((float)nutrientRatios[0][1] / 10));                                          // add Part B nutes
@@ -1345,25 +1345,29 @@ void increaseEc() {
   if (shouldAddSupp1) {
     isPumpInUse = true;
     digitalWrite(supp1, HIGH);
-    delay(5000 * ((float)nutrientRatios[1][1] / 10));                                          // add supplemental nutes #1
+    delay(pumpRuntime * ((float)nutrientRatios[1][1] / 10));                                          // add supplemental nutes #1
     digitalWrite(supp1, LOW);
     isPumpInUse = false;
   }
   if (shouldAddSupp2) {
     isPumpInUse = true;
     digitalWrite(supp2, HIGH);
-    delay(5000 * ((float)nutrientRatios[2][1] / 10));                                          // add supplemental nutes #2
+    delay(pumpRuntime * ((float)nutrientRatios[2][1] / 10));                                          // add supplemental nutes #2
     digitalWrite(supp2, LOW);
     isPumpInUse = false;
   }
   if (shouldAddSupp3) {
     isPumpInUse = true;
     digitalWrite(supp3, HIGH);
-    delay(5000 * ((float)nutrientRatios[3][1] / 10));                                         // add supplemental nutes #3
+    delay(pumpRuntime * ((float)nutrientRatios[3][1] / 10));                                         // add supplemental nutes #3
     digitalWrite(supp3, LOW);
     isPumpInUse = false;
   }
   ecWaitTime = now();
+}
+
+boolean isTouchingPoint(int yMin, int yMax, int xMin, int xMax) {
+  return p.y >= yMin && p.y <= yMax && p.x >= xMin && p.x <= xMax && isTouchingScreen();
 }
 
 boolean isTouchingScreen() {
