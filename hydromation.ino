@@ -37,7 +37,7 @@
 #define WHITE HX8357_WHITE
 #define BLACK 0x0000
 
-#define Offset -2.24            //deviation compensate
+#define Offset -5.78            //deviation compensate
 #define samplingInterval 20
 #define ArrayLength  40    //times of collection
 int pHArray[ArrayLength];   //Store the average value of the sensor feedback
@@ -58,7 +58,7 @@ const int supp1 = 5;
 const int supp2 = 4;
 const int supp3 = 1;
 const int fiveMinutes = 300;
-const char version[6] = "1.4.0";
+const char version[6] = "1.4.1";
 
 int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
@@ -79,11 +79,11 @@ boolean shouldAddSupp1 = false;
 boolean shouldAddSupp2 = false;
 boolean shouldAddSupp3 = false;
 float targetEc = 0.0;
-float ecTolerance = 0.0;
+float ecTolerance = 50.0;
 boolean isEcProbeAsleep = true;
 float ecCollection[7];
 int ecIndex = 0;
-boolean isCheckingEc = false;
+boolean isCheckingEc = false; 
 boolean isReadingEc = false;
 boolean isCheckingPh = false;
 int currentMinute;
