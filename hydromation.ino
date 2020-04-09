@@ -64,7 +64,7 @@ int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
 int phTimeout = 3600; // 1 hour
 TSPoint p;
-SoftwareSerial ecSerial(tx, rx);                        // define how the soft serial port is going to work
+SoftwareSerial ecSerial(rx, tx);                        // define how the soft serial port is going to work
 boolean isPumpInUse = false;
 float lastPh = 0.0;
 time_t lastPhCheck;
