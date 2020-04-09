@@ -58,7 +58,7 @@ const int supp1 = 5;
 const int supp2 = 4;
 const int supp3 = 1;
 const int fiveMinutes = 300;
-const char version[6] = "1.4.2";
+const char version[6] = "1.4.3";
 
 int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
@@ -109,7 +109,6 @@ void setup() {
   setTime(18, 0, 0, 8, 4, 20);
   ecSerial.begin(9600);                                   // set baud rate for the software serial port to 9600
   ecSensorString.reserve(30);                             // set aside some bytes for receiving data from Atlas Scientific product
-  ecSerial.print("SLEEP\r");                              // ensures the EC probe is awake incase the system shut down while it was sleeping.
   tft.begin(HX8357D);
   tft.setRotation(3);
   clearScreen();
@@ -662,7 +661,6 @@ void checkEc() {
     isCheckingEc = true;
   }
   if (isEcProbeAsleep) {
-    ecSerial.print("WAKE\r");
     isEcProbeAsleep = false;
   }
   if (!isEcStringComplete) {
@@ -685,13 +683,11 @@ void checkEc() {
     lastEc = ecCollection[6];
     clearScreen();
     if (lastEc < targetEc - ecTolerance) {
-      ecSerial.print("SLEEP\r");
       isEcProbeAsleep = true;
       increaseEc();
     } else {
       ecWaitTime = 0;
       isCheckingEc = false;
-      ecSerial.print("SLEEP\r");
       isEcProbeAsleep = true;
       clearScreen();
     }
@@ -701,7 +697,6 @@ void checkEc() {
 
 void checkPh() {
   if (!isEcProbeAsleep) {
-    ecSerial.print("SLEEP\r");
     isEcProbeAsleep = true;
   }
   lastPh = getPh();
