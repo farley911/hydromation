@@ -37,7 +37,7 @@
 #define WHITE HX8357_WHITE
 #define BLACK 0x0000
 
-#define Offset 0.34            //deviation compensate
+#define Offset 0.10            //deviation compensate
 #define samplingInterval 20
 #define ArrayLength  40    //times of collection
 int pHArray[ArrayLength];   //Store the average value of the sensor feedback
@@ -106,7 +106,7 @@ void setup() {
   pinMode(supp1, OUTPUT);
   pinMode(supp2, OUTPUT);
   pinMode(supp3, OUTPUT);
-  setTime(18, 0, 0, 25, 12, 19);
+  setTime(18, 0, 0, 8, 4, 20);
   ecSerial.begin(9600);                                   // set baud rate for the software serial port to 9600
   ecSensorString.reserve(30);                             // set aside some bytes for receiving data from Atlas Scientific product
   ecSerial.print("SLEEP\r");                              // ensures the EC probe is awake incase the system shut down while it was sleeping.
