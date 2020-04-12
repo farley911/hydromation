@@ -58,12 +58,8 @@ const int supp1 = 5;
 const int supp2 = 4;
 const int supp3 = 1;
 const int fiveMinutes = 300;
-<<<<<<< HEAD
-const char version[6] = "1.3.1";
-=======
 const char version[6] = "1.4.2";
->>>>>>> parent of 0a58ba3... 1.4.3
-
+ 
 int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
 int phTimeout = 3600; // 1 hour
