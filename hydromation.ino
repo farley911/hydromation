@@ -37,7 +37,7 @@
 #define WHITE HX8357_WHITE
 #define BLACK 0x0000
 
-#define Offset 0.01            //deviation compensate
+#define Offset 0.10            //deviation compensate
 #define samplingInterval 20
 #define ArrayLength  40    //times of collection
 int pHArray[ArrayLength];   //Store the average value of the sensor feedback
