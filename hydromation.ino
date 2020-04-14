@@ -58,7 +58,7 @@ const int supp1 = 5;
 const int supp2 = 4;
 const int supp3 = 1;
 const int fiveMinutes = 300;
-const char version[6] = "1.4.2";
+const char version[6] = "1.3.4";
  
 int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
