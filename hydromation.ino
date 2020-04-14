@@ -37,6 +37,11 @@
 #define WHITE HX8357_WHITE
 #define BLACK 0x0000
 
+#define Offset 0.10            //deviation compensate
+#define samplingInterval 20
+#define ArrayLength  40    //times of collection
+int pHArray[ArrayLength];   //Store the average value of the sensor feedback
+
 Adafruit_HX8357 tft = Adafruit_HX8357(TFT_CS, TFT_DC, TFT_RST);
 
 // For better pressure precision, we need to know the resistance
@@ -53,13 +58,13 @@ const int supp1 = 5;
 const int supp2 = 4;
 const int supp3 = 1;
 const int fiveMinutes = 300;
-const char version[6] = "1.3.3";
-
+const char version[6] = "1.4.2";
+ 
 int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
 int phTimeout = 3600; // 1 hour
 TSPoint p;
-SoftwareSerial ecSerial(tx, rx);                        // define how the soft serial port is going to work
+SoftwareSerial ecSerial(rx, tx);                        // define how the soft serial port is going to work
 boolean isPumpInUse = false;
 float lastPh = 0.0;
 time_t lastPhCheck;
@@ -74,15 +79,13 @@ boolean shouldAddSupp1 = false;
 boolean shouldAddSupp2 = false;
 boolean shouldAddSupp3 = false;
 float targetEc = 0.0;
-float ecTolerance = 0.0;
+float ecTolerance = 50.0;
 boolean isEcProbeAsleep = true;
 float ecCollection[7];
 int ecIndex = 0;
-boolean isCheckingEc = false;
+boolean isCheckingEc = false; 
 boolean isReadingEc = false;
 boolean isCheckingPh = false;
-float slopeValue;
-float interceptValue;
 int currentMinute;
 boolean isSettingDateTime = false;
 int setDateMonth;
@@ -107,7 +110,6 @@ void setup() {
   ecSerial.begin(9600);                                   // set baud rate for the software serial port to 9600
   ecSensorString.reserve(30);                             // set aside some bytes for receiving data from Atlas Scientific product
   ecSerial.print("SLEEP\r");                              // ensures the EC probe is awake incase the system shut down while it was sleeping.
-  readCharacteristicValues();                             //read the slope and intercept of the ph probe
   tft.begin(HX8357D);
   tft.setRotation(3);
   clearScreen();
@@ -609,6 +611,46 @@ void addSetTimeScreenActions() {
     isSettingDateTime = false;
     clearScreen();
   }
+}
+
+double avergearray(int* arr, int number){
+  int i;
+  int max,min;
+  double avg;
+  long amount=0;
+  if(number<=0){
+  // Error: Can not divide by 0 or less, return 0.
+    return 0;
+  }
+  if(number<5){   //less than 5, calculated directly statistics
+    for(i=0;i<number;i++){
+      amount+=arr[i];
+    }
+    avg = amount/number;
+    return avg;
+  }else{
+    if(arr[0]<arr[1]){
+      min = arr[0];max=arr[1];
+    }
+    else{
+      min=arr[1];max=arr[0];
+    }
+    for(i=2;i<number;i++){
+      if(arr[i]<min){
+        amount+=min;        //arr<min
+        min=arr[i];
+      }else {
+        if(arr[i]>max){
+          amount+=max;    //arr>max
+          max=arr[i];
+        }else{
+          amount+=arr[i]; //min<=arr<=max
+        }
+      }//if
+    }//for
+    avg = (double)amount/(number-2);
+  }//if
+  return avg;
 }
 
 void checkEc() {
@@ -1281,29 +1323,6 @@ void drawUpButton(int x, int y) {
   tft.fillTriangle(x + 20, y + 10, x + 30, y + 28, x + 10, y + 28, TEAL);
 }
 
-int getMedianNum(int bArray[], int iFilterLen) {        // method copied from calibration example code.
-  int bTab[iFilterLen];
-  for (byte i = 0; i<iFilterLen; i++) {
-    bTab[i] = bArray[i];
-  }
-  int i, j, z, bTemp;
-  for (j = 0; j < iFilterLen - 1; j++) {
-    for (i = 0; i < iFilterLen - j - 1; i++) {
-      if (bTab[i] > bTab[i + 1]) {
-        bTemp = bTab[i];
-        bTab[i] = bTab[i + 1];
-        bTab[i + 1] = bTemp;
-     }
-    }
-  }
-  float sum;
-  for (z = 0; z < iFilterLen; z++) {
-    sum = sum + bTab[z];
-  }
-  bTemp = sum / iFilterLen;
-  return bTemp;
-}
-
 int getPpm(float ec) {
   return ec * 500;
 }
@@ -1426,19 +1445,6 @@ char* parseEcString() {
 
 void purgePumpLines() {
   
-}
-
-void readCharacteristicValues() {
-  EEPROM_read(SlopeValueAddress, slopeValue);
-  EEPROM_read(InterceptValueAddress, interceptValue);
-  if(EEPROM.read(SlopeValueAddress)==0xFF && EEPROM.read(SlopeValueAddress+1)==0xFF && EEPROM.read(SlopeValueAddress+2)==0xFF && EEPROM.read(SlopeValueAddress+3)==0xFF) {
-    slopeValue = 3.5;                                   // If the EEPROM is new, the recommendatory slope is 3.5.
-    EEPROM_write(SlopeValueAddress, slopeValue);
-  }
-  if(EEPROM.read(InterceptValueAddress)==0xFF && EEPROM.read(InterceptValueAddress+1)==0xFF && EEPROM.read(InterceptValueAddress+2)==0xFF && EEPROM.read(InterceptValueAddress+3)==0xFF) {
-    interceptValue = 0;                                 // If the EEPROM is new, the recommendatory intercept is 0.
-    EEPROM_write(InterceptValueAddress, interceptValue);
-  }
 }
 
 void storeDateTime() {
