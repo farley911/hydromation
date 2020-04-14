@@ -106,7 +106,7 @@ void setup() {
   pinMode(supp1, OUTPUT);
   pinMode(supp2, OUTPUT);
   pinMode(supp3, OUTPUT);
-  setTime(22, 0, 0, 13, 4, 2020);
+  setTime(18, 0, 0, 1, 1, 2017);
   ecSerial.begin(9600);                                   // set baud rate for the software serial port to 9600
   ecSensorString.reserve(30);                             // set aside some bytes for receiving data from Atlas Scientific product
   ecSerial.print("SLEEP\r");                              // ensures the EC probe is awake incase the system shut down while it was sleeping.
@@ -1339,7 +1339,7 @@ float getPh() {
     delay(40);
   }
   avgValue = getMedianNum(phSamples, sampleCount);
-  return (avgValue / 1000 * slopeValue + interceptValue) + 0.218; // pH meter seems to read roughly .2 below the actual pH so I'm adjusting it.
+  return (avgValue / 1000 * slopeValue + interceptValue) - 0.2; // pH meter seems to read roughly .2 below the actual pH so I'm adjusting it.
 }
 
 void increasePh() {
@@ -1454,3 +1454,5 @@ void storeDateTime() {
   setDateMonth = month();
   setDateYear = year();
 }
+
+
