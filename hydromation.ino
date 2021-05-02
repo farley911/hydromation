@@ -8,8 +8,6 @@
 
 #define rx 3                                            // define what pin rx is going to be
 #define tx 2                                            // define what pin tx is going to be
-#define SlopeValueAddress 0     // (slope of the ph probe)store at the beginning of the EEPROM. The slope is a float number,occupies 4 bytes.
-#define InterceptValueAddress (SlopeValueAddress+4) 
 #define EEPROM_write(address, p) {int i = 0; byte *pp = (byte*)&(p);for(; i < sizeof(p); i++) EEPROM.write(address+i, pp[i]);}
 #define EEPROM_read(address, p)  {int i = 0; byte *pp = (byte*)&(p);for(; i < sizeof(p); i++) pp[i]=EEPROM.read(address+i);}
 
@@ -37,7 +35,7 @@
 #define WHITE HX8357_WHITE
 #define BLACK 0x0000
 
-#define Offset 0.10            //deviation compensate
+#define Offset -0.61            //deviation compensate
 #define samplingInterval 20
 #define ArrayLength  40    //times of collection
 int pHArray[ArrayLength];   //Store the average value of the sensor feedback
@@ -58,8 +56,9 @@ const int supp1 = 5;
 const int supp2 = 4;
 const int supp3 = 1;
 const int fiveMinutes = 300;
-const char version[6] = "1.3.4";
- 
+const char version[6] = "1.3.5";
+
+int pHArrayIndex=0;
 int currentScreen = 1;
 long ecTimeout = 43200; // 12 hours
 int phTimeout = 3600; // 1 hour
@@ -106,7 +105,7 @@ void setup() {
   pinMode(supp1, OUTPUT);
   pinMode(supp2, OUTPUT);
   pinMode(supp3, OUTPUT);
-  setTime(18, 0, 0, 1, 1, 2017);
+  setTime(18, 0, 0, 2, 5, 2021);
   ecSerial.begin(9600);                                   // set baud rate for the software serial port to 9600
   ecSensorString.reserve(30);                             // set aside some bytes for receiving data from Atlas Scientific product
   ecSerial.print("SLEEP\r");                              // ensures the EC probe is awake incase the system shut down while it was sleeping.
@@ -157,9 +156,6 @@ void loop() {
         break;
       case 10:
         displayEnablePumpsScreen();
-        break;
-      case 11:
-        displayAdjustSchedulesScreen();
         break;
       case 12:
         displayNutrientRatioScreenPage1();
@@ -330,12 +326,6 @@ void addConfigScreen3Actions() {
   if (isTouchingPoint(270, 430, 190, 240)) {
     clearScreen();
     currentScreen = 6;
-  }
-
-  // Adjust schedules
-  if (isTouchingPoint(270, 430, 250, 300)) {
-    clearScreen();
-    currentScreen = 11;
   }
 }
 
@@ -619,7 +609,7 @@ double avergearray(int* arr, int number){
   double avg;
   long amount=0;
   if(number<=0){
-  // Error: Can not divide by 0 or less, return 0.
+    // Error number for the array to avraging!
     return 0;
   }
   if(number<5){   //less than 5, calculated directly statistics
@@ -808,43 +798,6 @@ void displayAdjustNutrientsScreen() {
   drawButton(250, 250, 165, ratios);
   
   addAdjustNutrientActions();
-}
-
-void displayAdjustSchedulesScreen() {
-  displayHeader();
-
-  drawUpButton(103, 80);
-  drawUpButton(313, 80);
-
-  tft.setCursor(45, 140);
-  tft.setTextColor(WHITE);
-  tft.print("pH:");
-  tft.setTextColor(TEAL);
-  tft.setCursor(105, 140);
-  tft.print(phTimeout / 3600);
-  tft.setCursor(150, 145);
-  tft.setTextSize(2);
-  tft.print("hour(s)");
-
-  tft.setTextSize(3);
-  tft.setTextColor(WHITE);
-  tft.setCursor(255, 140);
-  tft.print("EC:");
-  tft.setTextColor(TEAL);
-  tft.setCursor(315, 140);
-  tft.print(ecTimeout / 3600);
-  tft.setCursor(360, 145);
-  tft.setTextSize(2);
-  tft.print("hour(s)");
-
-  drawDownButton(103, 185);
-  drawDownButton(313, 185);
-
-  tft.setTextSize(3);
-  char backText[ ] = "Back";
-  drawButton(175, 250, 125, backText);
-
-  addAdjustScheduleActions();
 }
 
 void displayConfigScreen() {
@@ -1328,18 +1281,20 @@ int getPpm(float ec) {
 }
 
 float getPh() {
-  float avgValue;
-  int sampleCount = 30;
-  int phSamples[sampleCount];
-  int temp;
-  EEPROM_read(SlopeValueAddress, slopeValue);     // After calibration, the new slope and intercept should be read ,to update current value.
-  EEPROM_read(InterceptValueAddress, interceptValue);
-  for (int i = 0; i < sampleCount; i++) {                        // Get 10 sample values from the sensor to smooth the value
-    phSamples[i] = analogRead(phSensor) / 1024.0 * 5000;
-    delay(40);
+  static unsigned long samplingTime = millis();
+  static unsigned long printTime = millis();
+  static float pHValue,voltage;
+  if(millis()-samplingTime > samplingInterval)
+  {
+    do {
+      pHArray[pHArrayIndex++]=analogRead(0);
+    } while (pHArrayIndex < ArrayLength);
+    if(pHArrayIndex==ArrayLength) pHArrayIndex=0;
+    voltage = avergearray(pHArray, ArrayLength)*5.0/1024;
+    pHValue = 3.5*voltage+Offset;
+    samplingTime=millis();
+    return pHValue;
   }
-  avgValue = getMedianNum(phSamples, sampleCount);
-  return (avgValue / 1000 * slopeValue + interceptValue) - 0.2; // pH meter seems to read roughly .2 below the actual pH so I'm adjusting it.
 }
 
 void increasePh() {
