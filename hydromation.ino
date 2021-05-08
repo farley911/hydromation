@@ -56,7 +56,7 @@ const int supp1 = 5;
 const int supp2 = 4;
 const int supp3 = 1;
 const int fiveMinutes = 300;
-const char version[6] = "1.3.5";
+const char version[6] = "1.3.6";
 
 int pHArrayIndex=0;
 int currentScreen = 1;
@@ -105,7 +105,7 @@ void setup() {
   pinMode(supp1, OUTPUT);
   pinMode(supp2, OUTPUT);
   pinMode(supp3, OUTPUT);
-  setTime(18, 0, 0, 2, 5, 2021);
+  setTime(18, 0, 0, 7, 5, 2021);
   ecSerial.begin(9600);                                   // set baud rate for the software serial port to 9600
   ecSensorString.reserve(30);                             // set aside some bytes for receiving data from Atlas Scientific product
   ecSerial.print("SLEEP\r");                              // ensures the EC probe is awake incase the system shut down while it was sleeping.
@@ -1281,20 +1281,14 @@ int getPpm(float ec) {
 }
 
 float getPh() {
-  static unsigned long samplingTime = millis();
-  static unsigned long printTime = millis();
   static float pHValue,voltage;
-  if(millis()-samplingTime > samplingInterval)
-  {
-    do {
-      pHArray[pHArrayIndex++]=analogRead(0);
-    } while (pHArrayIndex < ArrayLength);
-    if(pHArrayIndex==ArrayLength) pHArrayIndex=0;
-    voltage = avergearray(pHArray, ArrayLength)*5.0/1024;
-    pHValue = 3.5*voltage+Offset;
-    samplingTime=millis();
-    return pHValue;
-  }
+  do {
+    pHArray[pHArrayIndex++]=analogRead(0);
+  } while (pHArrayIndex < ArrayLength);
+  if(pHArrayIndex==ArrayLength) pHArrayIndex=0;
+  voltage = avergearray(pHArray, ArrayLength)*5.0/1024;
+  pHValue = 3.5*voltage+Offset;
+  return pHValue;
 }
 
 void increasePh() {
