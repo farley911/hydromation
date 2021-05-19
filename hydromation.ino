@@ -56,7 +56,7 @@ const int supp1 = 5;
 const int supp2 = 4;
 const int supp3 = 1;
 const int fiveMinutes = 300;
-const char version[6] = "1.3.6";
+const char version[6] = "1.3.7";
 
 int pHArrayIndex=0;
 int currentScreen = 1;
@@ -78,7 +78,7 @@ boolean shouldAddSupp1 = false;
 boolean shouldAddSupp2 = false;
 boolean shouldAddSupp3 = false;
 float targetEc = 0.0;
-float ecTolerance = 50.0;
+float ecTolerance = 0.0;
 boolean isEcProbeAsleep = true;
 float ecCollection[7];
 int ecIndex = 0;
@@ -105,7 +105,7 @@ void setup() {
   pinMode(supp1, OUTPUT);
   pinMode(supp2, OUTPUT);
   pinMode(supp3, OUTPUT);
-  setTime(18, 0, 0, 7, 5, 2021);
+  setTime(18, 0, 0, 18, 5, 2021);
   ecSerial.begin(9600);                                   // set baud rate for the software serial port to 9600
   ecSensorString.reserve(30);                             // set aside some bytes for receiving data from Atlas Scientific product
   ecSerial.print("SLEEP\r");                              // ensures the EC probe is awake incase the system shut down while it was sleeping.
@@ -213,13 +213,13 @@ void addAdjustNutrientActions() {
   }
 
   // Adjust Ratios Button
-  if (isTouchingPoint(70, 195, 250, 300)) {
+  if (isTouchingPoint(50, 215, 200, 250)) {
     currentScreen = 12;
     clearScreen();
   }
 
   // Back button
-  if (isTouchingPoint(250, 415, 250, 300)) {
+  if (isTouchingPoint(264, 386, 200, 250)) {
     currentScreen = 2;
     clearScreen();
   }
@@ -277,7 +277,7 @@ void  addConfigScreenActions() {
   }
   
   // navigate from config page 1 to 2
-  if (isTouchingPoint(225, 430, 250, 300)) {
+  if (isTouchingPoint(225, 430, 200, 250)) {
     clearScreen();
     currentScreen = 3;
   }
@@ -303,7 +303,7 @@ void addConfigScreen2Actions() {
   }
 
   // Navigate to config page 3
-  if (isTouchingPoint(215, 430, 250, 300)) {
+  if (isTouchingPoint(215, 430, 200, 250)) {
     clearScreen();
     currentScreen = 4;
   }
@@ -323,7 +323,7 @@ void addConfigScreen3Actions() {
   }
   
   // Set Date
-  if (isTouchingPoint(270, 430, 190, 240)) {
+  if (isTouchingPoint(270, 430, 140, 190)) {
     clearScreen();
     currentScreen = 6;
   }
@@ -346,7 +346,7 @@ void addEnablePumpsActions() {
     clearScreen();
     shouldAddSupp3 = !shouldAddSupp3;
   }
-  if (isTouchingPoint(160, 285, 250, 300)) {
+  if (isTouchingPoint(160, 285, 200, 250)) {
     clearScreen();
     currentScreen = 2;
   }
@@ -375,7 +375,7 @@ void addHomeScreenActions() {
   }
   
   // Navigate to Configuration Screen
-  if (isTouchingPoint(135, 340, 255, 305)) {
+  if (isTouchingPoint(255, 305, 140, 345)) {
     clearScreen();
     currentScreen = 2; // Display the configuration screen
   }
@@ -407,14 +407,14 @@ void addNutrientRatiosActionsPage1() {
   }
 
   // Back button
-  if (isTouchingPoint(265, 390, 250, 300)) {
+  if (isTouchingPoint(265, 390, 200, 250)) {
     determineSupplementRatios();
     clearScreen();
     currentScreen = 7;
   }
 
   // More button
-  if (isTouchingPoint(100, 225, 250, 300)) {
+  if (isTouchingPoint(100, 225, 200, 250)) {
     clearScreen();
     currentScreen = 13;
   }
@@ -446,7 +446,7 @@ void addNutrientRatiosActionsPage2() {
   }
 
   // Back button
-  if (isTouchingPoint(180, 305, 250, 300)) {
+  if (isTouchingPoint(180, 305, 200, 250)) {
     clearScreen();
     currentScreen = 12;
   }
@@ -463,7 +463,7 @@ void addPurgeScreenActions() {
   } else if (isTouchingPoint(230, 345, 155, 195)) {
     digitalWrite(partB, HIGH);
     isPurgingPump = true;
-  } else if (isTouchingPoint(230, 345, 230, 270)) {
+  } else if (isTouchingPoint(230, 345, 180, 220)) {
     digitalWrite(supp1, HIGH);
     isPurgingPump = true;
   } else if (isTouchingPoint(10, 125, 80, 130)) {
@@ -472,7 +472,7 @@ void addPurgeScreenActions() {
   } else if (isTouchingPoint(10, 125, 155, 195)) {
     digitalWrite(phUp, HIGH);
     isPurgingPump = true;
-  } else if (isTouchingPoint(10, 125, 230, 270)) {
+  } else if (isTouchingPoint(10, 125, 180, 220)) {
     digitalWrite(phDown, HIGH);
     isPurgingPump = true;
   } else if (isPurgingPump) {
@@ -540,7 +540,7 @@ void addSetDateActions() {
   }
 
   // Save date
-  if (isTouchingPoint(150, 280, 240, 290)) {
+  if (isTouchingPoint(150, 280, 190, 240)) {
     int _hour = hour();
     int _minute = minute();
     setTime(_hour, _minute, 0, setDateDay, setDateMonth, setDateYear);
@@ -592,7 +592,7 @@ void addSetTimeScreenActions() {
   }
 
   // Save time
-  if (isTouchingPoint(150, 280, 240, 290)) {
+  if (isTouchingPoint(150, 280, 210, 240)) {
     int _month = month();
     int _day = day();
     int _year = year();
