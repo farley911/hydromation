@@ -26,7 +26,7 @@
 #define MINPRESSURE 1
 #define MAXPRESSURE 1000
 
-// The display uses hardware SPI, plus #9 & #10
+// The display uses hardware SPI, plus #9 & #10 
 #define TFT_RST -1  // dont use a reset pin, tie to arduino RST if you like
 #define TFT_DC 9
 #define TFT_CS 10
@@ -56,7 +56,7 @@ const int supp1 = 5;
 const int supp2 = 4;
 const int supp3 = 1;
 const int fiveMinutes = 300;
-const char version[6] = "1.3.7";
+const char version[6] = "1.3.8";
 
 int pHArrayIndex=0;
 int currentScreen = 1;
