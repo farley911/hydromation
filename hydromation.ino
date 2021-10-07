@@ -35,7 +35,7 @@
 #define WHITE HX8357_WHITE
 #define BLACK 0x0000
 
-#define Offset -0.61            //deviation compensate
+#define Offset -0.62            //deviation compensate // Adjust this to calibrate 7.0 pH. Adjust 4.01 using the knob on the jack. // Increase to decrease pH ??
 #define samplingInterval 20
 #define ArrayLength  40    //times of collection
 int pHArray[ArrayLength];   //Store the average value of the sensor feedback

@@ -6,7 +6,7 @@
  # SKU    : SEN0161
 */
 #define SensorPin A0            //pH meter Analog output to Arduino Analog Input 0
-#define Offset -0.54            //deviation compensate
+#define Offset -0.62            //deviation compensate // Adjust this to calibrate 7.0 pH. Adjust 4.01 using the knob on the jack. // Increase to decrease pH ??
 #define LED 13
 #define samplingInterval 20
 #define printInterval 800
